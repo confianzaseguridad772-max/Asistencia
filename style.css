@@ -1,133 +1,269 @@
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydT4norXCFrbM3_VV0HqcqLvRhsvU88NDOo5z9CPlnq_Pz8rCOMzfhid8cAidr2L_0zA/exec"; 
-let integrantes = [];
-
-// Mostrar fecha de hoy
-document.getElementById('fechaActual').innerText = new Date().toLocaleDateString();
-
-// 1. Cargar integrantes cuando se elige líder
-async function cargarLista() {
-    const lider = document.getElementById('liderGp').value;
-    if(!lider) return;
-    
-    try {
-        const response = await fetch(`${SCRIPT_URL}?lider=${encodeURIComponent(lider)}`);
-        integrantes = await response.json();
-        dibujarTablas();
-    } catch (e) {
-        alert("Error al conectar con la base de datos");
-    }
+/* --- Variables y Configuración Base --- */
+:root {
+  --primary: #1a73e8;       /* Azul Google */
+  --primary-dark: #1557b0;
+  --amigo: #00897b;        /* Verde Teal para Amigos */
+  --bg: #f8f9fa;
+  --white: #ffffff;
+  --text-main: #202124;
+  --text-sub: #5f6368;
+  --border: #dadce0;
+  --shadow: 0 4px 20px rgba(0,0,0,0.08);
 }
 
-// 2. Dibujar las tablas filtradas
-function dibujarTablas() {
-    const cuerpoB = document.querySelector('#tablaBautizados tbody');
-    const cuerpoA = document.querySelector('#tablaAmigos tbody');
-    cuerpoB.innerHTML = '';
-    cuerpoA.innerHTML = '';
-
-    integrantes.forEach((persona, index) => {
-        const esBautizado = persona.Tipo && persona.Tipo.includes("Bautizado");
-        
-        const fila = `
-            <tr>
-                <td>${persona.Nombres}</td>
-                <td style="text-align:right">
-                    <input type="number" id="lec-${index}" class="lec-input" placeholder="Lec">
-                    <input type="checkbox" class="check-asis" data-idx="${index}">
-                </td>
-            </tr>
-        `;
-
-        if (esBautizado) {
-            cuerpoB.innerHTML += fila;
-        } else {
-            cuerpoA.innerHTML += fila;
-        }
-    });
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
-// 3. Marcar/Desmarcar todos
-function marcarBloque(valor) {
-    document.querySelectorAll('.check-asis').forEach(checkbox => {
-        checkbox.checked = valor;
-    });
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background-color: var(--bg);
+  margin: 0;
+  padding: 10px;
+  color: var(--text-main);
+  line-height: 1.5;
 }
 
-// 4. Enviar datos al Servidor
-function enviarDatos() {
-    const btn = document.getElementById('btnEnviar');
-    const lider = document.getElementById('liderGp').value;
-    const grupo = document.getElementById('nombreGrupo').value;
+/* --- Contenedor Principal --- */
+.container {
+  background: var(--white);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+  max-width: 750px;
+  margin: 10px auto;
+}
 
-    if (!lider || !grupo) {
-        alert("Por favor, selecciona un Líder y escribe el nombre del Grupo.");
-        return;
-    }
+/* --- Cabecera --- */
+.main-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  border-bottom: 2px solid #f1f3f4;
+  padding-bottom: 15px;
+}
 
-    btn.disabled = true;
-    btn.innerText = "Guardando en Excel...";
+.main-header h1 {
+  font-size: 22px;
+  margin: 0;
+  font-weight: 800;
+  color: var(--primary);
+  letter-spacing: -0.5px;
+}
 
-    let dAsist = [], dAmigos = [], nAsis = 0, nInasis = 0;
+.main-header p {
+  font-size: 12px;
+  margin: 0;
+  color: var(--text-sub);
+}
 
-    // Conteo rápido para el porcentaje
-    integrantes.forEach((p, i) => {
-        const check = document.querySelector(`.check-asis[data-idx="${i}"]`);
-        check.checked ? nAsis++ : nInasis++;
-    });
+.date-badge {
+  background: #e8f0fe;
+  color: var(--primary);
+  padding: 8px 16px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 700;
+}
 
-    const porcentaje = ((nAsis / integrantes.length) * 100).toFixed(0) + "%";
+/* --- Tarjetas de Configuración e Inputs --- */
+.config-card {
+  background: #f1f3f4;
+  padding: 18px;
+  border-radius: 15px;
+  margin-bottom: 20px;
+}
 
-    // Preparar registros
-    integrantes.forEach((p, i) => {
-        const asiste = document.querySelector(`.check-asis[data-idx="${i}"]`).checked;
-        const leccion = document.getElementById(`lec-${i}`).value || 0;
-        const esB = p.Tipo && p.Tipo.includes("Bautizado");
+.input-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 15px;
+  margin-bottom: 15px;
+}
 
-        // Regla: Enviar a "Asist" solo los INASISTENTES (según tu requerimiento anterior)
-        if (!asiste) {
-            dAsist.push({
-                lider: lider,
-                fecha: new Date().toLocaleDateString(),
-                grupo: grupo,
-                motivo: document.getElementById('motivo').value,
-                nombre: p.Nombres,
-                sexo: p.Sexo,
-                tipo: p.Tipo,
-                porcentaje: porcentaje,
-                lesTotal: "S/. " + document.getElementById('totalLes').value,
-                ofrenda: "S/. " + document.getElementById('totalOfrendas').value,
-                nAsis: nAsis,
-                nInasis: nInasis,
-                bautismos: document.getElementById('numBautismo').value,
-                lecLES: esB ? leccion : "",
-                lecBib: !esB ? leccion : ""
-            });
-        }
+.form-group label {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-sub);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
 
-        // Regla: Si es Amigo y tiene número de lección, enviar a "Amigos"
-        if (!esB && leccion > 0) {
-            dAmigos.push({
-                nombre: p.Nombres,
-                leccionNum: leccion,
-                fecha: new Date().toLocaleDateString()
-            });
-        }
-    });
+input, select {
+  width: 100%;
+  padding: 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  font-size: 14px;
+  background: var(--white);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
 
-    // Enviar por POST
-    fetch(SCRIPT_URL, {
-        method: "POST",
-        mode: "no-cors",
-        body: JSON.stringify({
-            destino: "ASISTENCIA",
-            registrosAsist: dAsist,
-            registrosAmigos: dAmigos
-        })
-    }).then(() => {
-        document.getElementById('modalResumen').style.display = 'flex';
-    }).catch(err => {
-        alert("Error: " + err);
-        btn.disabled = false;
-        btn.innerText = "Guardar Reporte General";
-    });
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
+}
+
+/* --- Barra de Acciones (Botones rápidos) --- */
+.action-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 25px;
+}
+
+.btn-action {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: transform 0.1s, opacity 0.2s;
+}
+
+.btn-action:active { transform: scale(0.98); }
+
+.btn-action.all { background: #e6f4ea; color: #1e8e3e; }
+.btn-action.none { background: #fce8e6; color: #d93025; }
+
+/* --- Secciones de Tablas --- */
+.table-section {
+  margin-top: 25px;
+}
+
+.table-title {
+  padding: 14px 18px;
+  color: var(--white);
+  border-radius: 12px 12px 0 0;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  justify-content: space-between;
+}
+
+.bautizados { background: var(--primary); }
+.amigos { background: var(--amigo); }
+
+.scroll-area {
+  border: 1.5px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  max-height: 380px;
+  overflow-y: auto;
+  background: var(--white);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  background: #f8f9fa;
+  font-size: 11px;
+  text-transform: uppercase;
+  text-align: left;
+  padding: 12px;
+  color: var(--text-sub);
+  position: sticky;
+  top: 0;
+}
+
+td {
+  padding: 14px 12px;
+  border-bottom: 1px solid #f1f3f4;
+  font-size: 14px;
+}
+
+/* Estilos internos de la tabla */
+.lec-input {
+  width: 55px;
+  text-align: center;
+  padding: 7px;
+  border-radius: 8px;
+  margin-right: 12px;
+}
+
+.check-asis {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: var(--primary);
+  vertical-align: middle;
+}
+
+/* --- Botón Principal de Envío --- */
+.btn-submit {
+  width: 100%;
+  background: var(--primary);
+  color: var(--white);
+  border: none;
+  padding: 18px;
+  border-radius: 15px;
+  font-weight: 800;
+  font-size: 16px;
+  margin-top: 35px;
+  cursor: pointer;
+  box-shadow: 0 6px 15px rgba(26, 115, 232, 0.25);
+  transition: background 0.3s;
+}
+
+.btn-submit:hover { background: var(--primary-dark); }
+.btn-submit:disabled { background: #ccc; box-shadow: none; cursor: not-allowed; }
+
+/* --- Modal y Overlay --- */
+.modal-overlay {
+  display: none; /* Se activa por JS */
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(32, 33, 36, 0.85);
+  backdrop-filter: blur(4px);
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-content {
+  background: var(--white);
+  padding: 35px;
+  border-radius: 24px;
+  text-align: center;
+  width: 100%;
+  max-width: 400px;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-content h2 { color: var(--primary); margin-top: 0; }
+.modal-content p { color: var(--text-sub); margin-bottom: 25px; }
+
+.btn-modal-close {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* --- Media Queries para Móviles --- */
+@media (max-width: 480px) {
+  .main-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .input-grid { grid-template-columns: 1fr; }
+  .container { padding: 15px; border-radius: 0; margin: 0; }
+  .table-title { font-size: 13px; }
+  td { font-size: 13px; padding: 10px 8px; }
 }
