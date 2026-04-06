@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Asistencia GP | SERVIR 2026</title>
+  <title>GP SERVIR 2026 | Asistencia</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
@@ -11,11 +11,8 @@
   <div class="main-wrapper">
     <div class="container">
       <header class="main-header">
-        <div class="logo-area">
-          <span class="icon">📊</span>
-          <h1>Control de Asistencia</h1>
-        </div>
-        <div class="date-badge" id="fechaActual">Cargando...</div>
+        <div class="logo-area"><h1>📊 Asistencia GP</h1></div>
+        <div class="date-badge" id="fechaActual"></div>
       </header>
       
       <section class="config-card">
@@ -23,108 +20,53 @@
           <div class="form-group">
             <label>👤 Líder de GP</label>
             <select id="liderGp" onchange="cargarLista()">
-              <option value="">Seleccione un líder...</option>
-              <option>1-Cherry / Avril</option>
-              <option>2-Tito / Zuliel</option>
-              <option>3-Ricardo / Rosario</option>
-              <option>4-Pedro /Rolando</option>
-              <option>5-Erika /Valeria</option>
-              <option>6-Jafet</option>
+              <option value="">Seleccione...</option>
+              <option>1-Cherry / Avril</option><option>2-Tito / Zuliel</option>
+              <option>3-Ricardo / Rosario</option><option>4-Pedro /Rolando</option>
+              <option>5-Erika /Valeria</option><option>6-Jafet</option>
               <option>7-Gustabo /Jenny</option>
             </select>
           </div>
+          <div class="form-group"><label>🏠 Nombre del Grupo</label><input type="text" id="nombreGrupo" placeholder="Ej. Centinelas"></div>
           <div class="form-group">
-            <label>🏠 Nombre del Grupo</label>
-            <input type="text" id="nombreGrupo" placeholder="Ej: Centinelas de la Fe">
+            <label>📅 Motivo</label>
+            <select id="motivo"><option>Reunión Semanal</option><option>Parejas Discipuladoras</option><option>Actividad Social</option></select>
           </div>
-          <div class="form-group">
-            <label>📅 Motivo de Reunión</label>
-            <select id="motivo">
-              <option>Reunión Semanal</option>
-              <option>Parejas Discipuladoras</option>
-              <option>Actividad Social</option>
-              <option>Otro</option>
-            </select>
-          </div>
+        </div>
+
+        <div class="input-grid extra-fields">
+          <div class="form-group"><label>💰 S/. LES TOTAL</label><input type="number" id="totalLes" step="0.1" value="0"></div>
+          <div class="form-group"><label>🪙 S/. OFRENDAS</label><input type="number" id="totalOfrendas" step="0.1" value="0"></div>
+          <div class="form-group"><label>🌊 N° BAUTISMO</label><input type="number" id="numBautismo" value="0"></div>
         </div>
       </section>
 
       <div class="action-bar">
-        <button class="btn-action all" onclick="marcarBloque(true)">✅ Marcar Todos</button>
+        <button class="btn-action all" onclick="marcarBloque(true)">✅ Todos Asistieron</button>
         <button class="btn-action none" onclick="marcarBloque(false)">❌ Limpiar</button>
       </div>
 
-      <div class="tables-wrapper">
-        <section class="table-section">
-          <h3 class="table-title bautizados">⭐ Bautizados</h3>
-          <div class="scroll-area">
-            <table id="tablaBautizados">
-              <thead>
-                <tr>
-                  <th>Integrante</th>
-                  <th class="txt-right">S/.LES / Asis</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr><td colspan="2" class="empty-state">Seleccione un líder</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
+      <section class="table-section">
+        <h3 class="table-title bautizados">⭐ Bautizados (Estudio LES)</h3>
+        <div class="scroll-area"><table id="tablaBautizados"><tbody></tbody></table></div>
+      </section>
 
-        <section class="table-section">
-          <h3 class="table-title amigos">🌱 Amigos de Esperanza</h3>
-          <div class="scroll-area">
-            <table id="tablaAmigos">
-              <thead>
-                <tr>
-                  <th>Integrante</th>
-                  <th class="txt-right">S/.LES / Asis</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr><td colspan="2" class="empty-state">Seleccione un líder</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
-      </div>
+      <section class="table-section">
+        <h3 class="table-title amigos">🌱 Amigos (Estudio Bíblico)</h3>
+        <div class="scroll-area"><table id="tablaAmigos"><tbody></tbody></table></div>
+      </section>
 
-      <footer class="main-footer">
-        <button class="btn-submit" id="btnEnviar" onclick="enviarAsistencia()">
-          <span>Guardar Registro en Excel</span>
-        </button>
-      </footer>
+      <button class="btn-submit" id="btnEnviar" onclick="enviarDatos()">Guardar Reporte</button>
     </div>
   </div>
 
   <div id="modalResumen" class="modal-overlay">
     <div class="modal-content">
-      <div class="modal-header">
-        <span class="modal-icon">✅</span>
-        <h2>¡Registro Exitoso!</h2>
-      </div>
-      <div class="modal-body">
-        <p class="modal-subtitle">Los datos se guardaron correctamente en la nube.</p>
-        <div class="resumen-stats">
-          <div class="stat-item">
-            <span class="stat-label">⭐ Bautizados:</span>
-            <span id="resumenBautizados" class="stat-value">0 de 0 (0%)</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">🌱 Amigos:</span>
-            <span id="resumenAmigos" class="stat-value">0 de 0 (0%)</span>
-          </div>
-        </div>
-        <div class="total-box">
-          <span class="total-label">TOTAL RECAUDADO</span>
-          <span id="resumenTotal" class="total-amount">S/. 0.00</span>
-        </div>
-      </div>
-      <button class="btn-modal-close" onclick="location.reload()">Aceptar y Finalizar</button>
+      <div class="modal-header"><h2>¡Registro Exitoso!</h2></div>
+      <div class="modal-body"><p>Se migraron los inasistentes a <b>Asist</b> y los avances a <b>Amigos</b>.</p></div>
+      <button class="btn-modal-close" onclick="location.reload()">Aceptar</button>
     </div>
   </div>
-
   <script src="script.js"></script>
 </body>
 </html>
