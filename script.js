@@ -1,4 +1,4 @@
-const URL = "TU_URL_DE_APPS_SCRIPT"; 
+const URL = "https://script.google.com/macros/s/AKfycbydT4norXCFrbM3_VV0HqcqLvRhsvU88NDOo5z9CPlnq_Pz8rCOMzfhid8cAidr2L_0zA/exec"; 
 let lista = [];
 
 document.getElementById('fechaActual').innerText = new Date().toLocaleDateString();
