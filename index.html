@@ -3,90 +3,102 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Asistencia GP - SERVIR 2026</title>
+  <title>Asistencia GP | SERVIR 2026</title>
   <link rel="stylesheet" href="style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h2>Control de Asistencia</h2>
-      <p id="fechaActual">Cargando fecha...</p>
-    </header>
-    
-    <div class="card">
-      <div class="form-group">
-        <label>Líder de GP:</label>
-        <select id="liderGp" onchange="cargarLista()">
-          <option value="">-- Seleccione Líder --</option>
-          <option>1-Cherry / Avril</option>
-          <option>2-Tito / Zuliel</option>
-          <option>3-Ricardo / Rosario</option>
-          <option>4-Pedro /Rolando</option>
-          <option>5-Erika /Valeria</option>
-          <option>6-Jafet</option>
-          <option>7-Gustabo /Jenny</option>
-        </select>
+  <div class="main-wrapper">
+    <div class="container">
+      <header class="main-header">
+        <div class="logo-area">
+          <span class="icon">📊</span>
+          <h1>Control de Asistencia</h1>
+        </div>
+        <div class="date-badge" id="fechaActual">Cargando...</div>
+      </header>
+      
+      <section class="config-card">
+        <div class="input-grid">
+          <div class="form-group">
+            <label>👤 Líder de GP</label>
+            <select id="liderGp" onchange="cargarLista()">
+              <option value="">Seleccione un líder...</option>
+              <option>1-Cherry / Avril</option>
+              <option>2-Tito / Zuliel</option>
+              <option>3-Ricardo / Rosario</option>
+              <option>4-Pedro /Rolando</option>
+              <option>5-Erika /Valeria</option>
+              <option>6-Jafet</option>
+              <option>7-Gustabo /Jenny</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>🏠 Nombre del Grupo</label>
+            <input type="text" id="nombreGrupo" placeholder="Ej: Centinelas de la Fe">
+          </div>
+
+          <div class="form-group">
+            <label>📅 Motivo de Reunión</label>
+            <select id="motivo">
+              <option>Reunión Semanal</option>
+              <option>Parejas Discipuladoras</option>
+              <option>Actividad Social</option>
+              <option>Otro</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <div class="action-bar">
+        <button class="btn-action all" onclick="marcarBloque(true)">✅ Marcar Todos</button>
+        <button class="btn-action none" onclick="marcarBloque(false)">❌ Limpiar</button>
       </div>
 
-      <div class="form-group">
-        <label>Nombre del Grupo:</label>
-        <input type="text" id="nombreGrupo" placeholder="Ej: Centinelas de la Fe">
+      <div class="tables-wrapper">
+        <section class="table-section">
+          <h3 class="table-title bautizados">⭐ Bautizados</h3>
+          <div class="scroll-area">
+            <table id="tablaBautizados">
+              <thead>
+                <tr>
+                  <th>Integrante</th>
+                  <th class="txt-right">S/.LES / Asis</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td colspan="2" class="empty-state">Seleccione un líder</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="table-section">
+          <h3 class="table-title amigos">🌱 Amigos de Esperanza</h3>
+          <div class="scroll-area">
+            <table id="tablaAmigos">
+              <thead>
+                <tr>
+                  <th>Integrante</th>
+                  <th class="txt-right">S/.LES / Asis</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td colspan="2" class="empty-state">Seleccione un líder</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
       </div>
 
-      <div class="form-group">
-        <label>Motivo-Reunión:</label>
-        <select id="motivo">
-          <option>Reunión Semanal</option>
-          <option>Parejas Discipuladoras</option>
-          <option>Actividad Social</option>
-          <option>Otro</option>
-        </select>
-      </div>
+      <footer class="main-footer">
+        <button class="btn-submit" id="btnEnviar" onclick="enviarAsistencia()">
+          <span>Guardar Registro en Excel</span>
+          <span class="loader"></span>
+        </button>
+      </footer>
     </div>
-
-    <div class="bulk-actions">
-      <button class="btn btn-secondary" onclick="marcarBloque(true)">Asistieron Todos</button>
-      <button class="btn btn-secondary" onclick="marcarBloque(false)">Limpiar Todo</button>
-    </div>
-
-    <section>
-      <h3 class="section-title">Bautizados</h3>
-      <div class="table-container">
-        <table id="tablaBautizados">
-          <thead>
-            <tr>
-              <th>Nombres y Apellidos</th>
-              <th style="text-align:right">S/.LES / Asis</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td colspan="2" class="empty-msg">Seleccione un líder para cargar lista</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <section>
-      <h3 class="section-title">Amigos de Esperanza</h3>
-      <div class="table-container">
-        <table id="tablaAmigos">
-          <thead>
-            <tr>
-              <th>Nombres y Apellidos</th>
-              <th style="text-align:right">S/.LES / Asis</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td colspan="2" class="empty-msg">Seleccione un líder para cargar lista</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <button class="btn btn-primary main-btn" id="btnEnviar" onclick="enviarAsistencia()">
-      Guardar Asistencia
-    </button>
   </div>
 
   <script src="script.js"></script>
