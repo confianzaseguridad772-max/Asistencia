@@ -1,22 +1,24 @@
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw4z23uUq9mtcrelMsObwoRD43Yy1nM-q9RDgKvOxySc-YsSegEbI4CYjfYmwRxdxTiWA/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydzLKrDpZcN_2THNkPGKyhA9Pab4vdLBcMeEFtlX91j9ruuv6LFeYO8eFS41-v7Bq1bQ/exec";
 let listaIntegrantes = [];
 
-document.getElementById('fechaActual').innerText = new Date().toLocaleDateString();
+document.getElementById('fechaActual').innerText = "Fecha: " + new Date().toLocaleDateString();
 
+// Función para cargar los integrantes desde el Sheets
 async function cargarLista() {
     const lider = document.getElementById('liderGp').value;
     if (!lider) return;
 
-    // Limpiar tablas
-    document.querySelector('#tablaBautizados tbody').innerHTML = "<tr><td colspan='2'>Cargando...</td></tr>";
-    document.querySelector('#tablaAmigos tbody').innerHTML = "<tr><td colspan='2'>Cargando...</td></tr>";
+    const tbodyB = document.querySelector('#tablaBautizados tbody');
+    const tbodyA = document.querySelector('#tablaAmigos tbody');
+    tbodyB.innerHTML = "<tr><td colspan='2'>Cargando integrantes...</td></tr>";
+    tbodyA.innerHTML = "<tr><td colspan='2'>Cargando integrantes...</td></tr>";
 
     try {
         const response = await fetch(`${SCRIPT_URL}?lider=${encodeURIComponent(lider)}`);
         listaIntegrantes = await response.json();
         renderizarTablas();
     } catch (error) {
-        alert("Error al conectar con la base de datos");
+        alert("Error al obtener datos. Verifique su conexión.");
         console.error(error);
     }
 }
@@ -30,9 +32,10 @@ function renderizarTablas() {
     listaIntegrantes.forEach((persona, index) => {
         const row = `<tr>
             <td>${persona.Nombres}</td>
-            <td><input type="checkbox" class="asis-check" data-index="${index}"></td>
+            <td style="text-align:right"><input type="checkbox" class="asis-check" data-index="${index}"></td>
         </tr>`;
         
+        // Clasificación por tipo
         if (persona.Tipo === "Bautizado") {
             tbodyB.innerHTML += row;
         } else {
@@ -45,23 +48,25 @@ function marcarBloque(estado) {
     document.querySelectorAll('.asis-check').forEach(chk => chk.checked = estado);
 }
 
-async function enviarAsistencia() {
+// Función para enviar la asistencia al Sheets
+function enviarAsistencia() {
     const btn = document.getElementById('btnEnviar');
     const lider = document.getElementById('liderGp').value;
     const nombreGrupo = document.getElementById('nombreGrupo').value;
     const motivo = document.getElementById('motivo').value;
 
     if (!lider || !nombreGrupo) {
-        return alert("Por favor complete el Líder y Nombre del Grupo");
+        alert("Complete el Líder y el Nombre del Grupo antes de guardar.");
+        return;
     }
 
     btn.disabled = true;
-    btn.innerText = "Registrando...";
+    btn.innerText = "Registrando en Sheets...";
 
-    const checks = document.querySelectorAll('.asis-check');
     const fecha = new Date().toLocaleDateString();
+    const checks = document.querySelectorAll('.asis-check');
     
-    // Conteo para porcentajes
+    // Cálculo de porcentaje por tipo
     let conteo = { "Bautizado": { tot: 0, asis: 0 }, "Amigos de Esperanza": { tot: 0, asis: 0 } };
     listaIntegrantes.forEach(p => { if(conteo[p.Tipo]) conteo[p.Tipo].tot++; });
 
@@ -82,25 +87,27 @@ async function enviarAsistencia() {
         }
     });
 
-    // Calcular % para cada registro enviado
+    // Asignar porcentaje calculado a cada fila del registro
     registros.forEach(reg => {
         const c = conteo[reg.tipo];
-        reg.porcentajeAsis = ((c.asis / c.tot) * 100).toFixed(1) + "%";
+        reg.porcentajeAsis = c.tot > 0 ? ((c.asis / c.tot) * 100).toFixed(1) + "%" : "0%";
     });
 
-    try {
-        const response = await fetch(SCRIPT_URL, {
-            method: "POST",
-            mode: "no-cors", // Importante para Apps Script desde dominios externos
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ destino: "ASISTENCIA", registros: registros })
-        });
-        
-        alert("¡Asistencia guardada exitosamente!");
-        location.reload();
-    } catch (error) {
-        alert("Error al enviar datos");
+    // Envío de datos mediante POST
+    fetch(SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors", 
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({ destino: "ASISTENCIA", registros: registros })
+    })
+    .then(() => {
+        alert("¡Asistencia registrada correctamente!");
+        location.reload(); // Recarga para limpiar el formulario
+    })
+    .catch(err => {
+        console.error(err);
+        alert("Ocurrió un error al enviar. Verifique su conexión.");
         btn.disabled = false;
         btn.innerText = "Guardar Asistencia";
-    }
+    });
 }
