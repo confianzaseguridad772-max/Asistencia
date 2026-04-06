@@ -33,12 +33,10 @@
               <option>7-Gustabo /Jenny</option>
             </select>
           </div>
-
           <div class="form-group">
             <label>🏠 Nombre del Grupo</label>
             <input type="text" id="nombreGrupo" placeholder="Ej: Centinelas de la Fe">
           </div>
-
           <div class="form-group">
             <label>📅 Motivo de Reunión</label>
             <select id="motivo">
@@ -95,9 +93,35 @@
       <footer class="main-footer">
         <button class="btn-submit" id="btnEnviar" onclick="enviarAsistencia()">
           <span>Guardar Registro en Excel</span>
-          <span class="loader"></span>
         </button>
       </footer>
+    </div>
+  </div>
+
+  <div id="modalResumen" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="modal-icon">✅</span>
+        <h2>¡Registro Exitoso!</h2>
+      </div>
+      <div class="modal-body">
+        <p class="modal-subtitle">Los datos se guardaron correctamente en la nube.</p>
+        <div class="resumen-stats">
+          <div class="stat-item">
+            <span class="stat-label">⭐ Bautizados:</span>
+            <span id="resumenBautizados" class="stat-value">0 de 0 (0%)</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">🌱 Amigos:</span>
+            <span id="resumenAmigos" class="stat-value">0 de 0 (0%)</span>
+          </div>
+        </div>
+        <div class="total-box">
+          <span class="total-label">TOTAL RECAUDADO</span>
+          <span id="resumenTotal" class="total-amount">S/. 0.00</span>
+        </div>
+      </div>
+      <button class="btn-modal-close" onclick="location.reload()">Aceptar y Finalizar</button>
     </div>
   </div>
 
