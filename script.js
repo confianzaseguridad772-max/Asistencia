@@ -1,72 +1,86 @@
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw1ZqltAwmRogSs7b2Q41PfKV5FQrTt5_uaKtBL9rLLnE6FU-qecAY0wUNBHkLX7DeksQ/exec"; // ¡IMPORTANTE: CAMBIA ESTO!
-let listaGlobal = [];
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw1ZqltAwmRogSs7b2Q41PfKV5FQrTt5_uaKtBL9rLLnE6FU-qecAY0wUNBHkLX7DeksQ/exec"; 
+let integrantes = [];
 
-document.getElementById('fechaHoy').innerText = new Date().toLocaleDateString();
+document.getElementById('fechaActual').innerText = new Date().toLocaleDateString();
 
-// Función para traer integrantes de Google Sheets
-async function obtenerIntegrantes() {
-    const lider = document.getElementById('selLider').value;
+async function cargarLista() {
+    const lider = document.getElementById('liderGp').value;
     if(!lider) return;
-    
     try {
-        const resp = await fetch(`${SCRIPT_URL}?lider=${encodeURIComponent(lider)}`);
-        listaGlobal = await resp.json();
-        
-        const tbB = document.querySelector('#tabBautizados tbody');
-        const tbA = document.querySelector('#tabAmigos tbody');
-        tbB.innerHTML = ''; tbA.innerHTML = '';
-
-        listaGlobal.forEach((p, i) => {
-            const esB = p.Tipo.includes("Bautizado");
-            const html = `<tr><td>${p.Nombres}</td><td align="right">
-                <input type="number" id="lec-${i}" style="width:45px" placeholder="Lec">
-                <input type="checkbox" class="chk-asis" data-idx="${i}">
-            </td></tr>`;
-            esB ? tbB.innerHTML += html : tbA.innerHTML += html;
-        });
-    } catch(e) { alert("Error al cargar lista"); }
+        const res = await fetch(`${SCRIPT_URL}?lider=${encodeURIComponent(lider)}`);
+        integrantes = await res.json();
+        renderizarTablas();
+    } catch(e) { alert("Error cargando integrantes"); }
 }
 
-function marcarTodos(v) { document.querySelectorAll('.chk-asis').forEach(c => c.checked = v); }
+function renderizarTablas() {
+    const tbB = document.querySelector('#tablaBautizados tbody');
+    const tbA = document.querySelector('#tablaAmigos tbody');
+    tbB.innerHTML = ''; tbA.innerHTML = '';
 
-async function procesarEnvio() {
-    const lider = document.getElementById('selLider').value;
-    const grupo = document.getElementById('inpGrupo').value;
-    if(!lider || !grupo) return alert("Complete Líder y Grupo");
-
-    document.getElementById('loading').style.display = 'flex';
-    
-    let dAsist = [], dAmigos = [], nA = 0, nI = 0;
-    listaGlobal.forEach((p, i) => {
-        document.querySelector(`.chk-asis[data-idx="${i}"]`).checked ? nA++ : nI++;
+    integrantes.forEach((p, i) => {
+        const esB = p.Tipo && p.Tipo.includes("Bautizado");
+        const html = `<tr>
+            <td>${p.Nombres}</td>
+            <td align="right">
+                <input type="number" id="lec-${i}" class="lec-input" placeholder="0">
+                <input type="checkbox" class="check-asis" data-idx="${i}">
+            </td>
+        </tr>`;
+        esB ? tbB.innerHTML += html : tbA.innerHTML += html;
     });
+}
 
-    const porc = ((nA / listaGlobal.length) * 100).toFixed(0) + "%";
+function marcarBloque(v) { 
+    document.querySelectorAll('.check-asis').forEach(c => c.checked = v); 
+}
 
-    listaGlobal.forEach((p, i) => {
-        const asis = document.querySelector(`.chk-asis[data-idx="${i}"]`).checked;
+function enviarDatos() {
+    const lider = document.getElementById('liderGp').value;
+    const grupo = document.getElementById('nombreGrupo').value;
+    if(!lider || !grupo) return alert("Complete Líder y Nombre del Grupo");
+
+    const btn = document.getElementById('btnEnviar');
+    btn.disabled = true;
+    btn.innerText = "Enviando...";
+
+    let dAsist = [], dAmigos = [], nA = 0, nI = 0;
+    
+    // Conteo para estadísticas
+    integrantes.forEach((p, i) => {
+        document.querySelector(`.check-asis[data-idx="${i}"]`).checked ? nA++ : nI++;
+    });
+    const porc = ((nA / integrantes.length) * 100).toFixed(0) + "%";
+
+    integrantes.forEach((p, i) => {
+        const asis = document.querySelector(`.check-asis[data-idx="${i}"]`).checked;
         const lec = document.getElementById(`lec-${i}`).value || 0;
-        const esB = p.Tipo.includes("Bautizado");
+        const esB = p.Tipo && p.Tipo.includes("Bautizado");
 
-        if(!asis) { // Si NO asistió, va a la hoja Asist
+        if(!asis) { // Registro para "Asist" (solo inasistentes)
             dAsist.push({
-                lider: lider, fecha: new Date().toLocaleDateString(), grupo: grupo, motivo: "Sabatica",
-                nombre: p.Nombres, sexo: p.Sexo, tipo: p.Tipo, porc: porc,
-                les: document.getElementById('inpLes').value, ofr: document.getElementById('inpOfr').value,
-                nA: nA, nI: nI, nB: document.getElementById('inpBaut').value,
+                lider: lider, fecha: new Date().toLocaleDateString(), grupo: grupo,
+                motivo: document.getElementById('motivo').value, nombre: p.Nombres,
+                sexo: p.Sexo, tipo: p.Tipo, porc: porc,
+                les: "S/. " + document.getElementById('totalLes').value,
+                ofr: "S/. " + document.getElementById('totalOfrendas').value,
+                nA: nA, nI: nI, nB: document.getElementById('numBautismo').value,
                 lLES: esB ? lec : "", lBib: !esB ? lec : ""
             });
         }
-        if(!esB && lec > 0) { // Si es Amigo y tiene lección, actualiza Amigos
+        if(!esB && lec > 0) { // Registro para "Amigos" (progreso lecciones)
             dAmigos.push({ nombre: p.Nombres, leccionNum: lec, fecha: new Date().toLocaleDateString() });
         }
     });
 
-    await fetch(SCRIPT_URL, {
-        method: "POST", mode: "no-cors",
+    fetch(SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
         body: JSON.stringify({ destino: "ASISTENCIA", registrosAsist: dAsist, registrosAmigos: dAmigos })
+    }).then(() => {
+        document.getElementById('modalResumen').style.display = 'flex';
+    }).catch(() => {
+        alert("Error de conexión");
+        btn.disabled = false;
     });
-
-    alert("¡Reporte Enviado!");
-    location.reload();
 }
