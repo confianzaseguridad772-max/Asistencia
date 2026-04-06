@@ -3,17 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Control de Asistencia GP</title>
+  <title>Asistencia - Grupos Pequeños</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="container">
-    <h2>Control de Asistencia GP</h2>
+    <header>
+      <h2>Control de Asistencia</h2>
+      <p id="fechaActual"></p>
+    </header>
     
     <div class="form-group">
       <label>Líder de GP:</label>
       <select id="liderGp" onchange="cargarLista()">
-        <option value="">Seleccione un líder...</option>
+        <option value="">-- Seleccione Líder --</option>
         <option>1-Cherry / Avril</option>
         <option>2-Tito / Zuliel</option>
         <option>3-Ricardo / Rosario</option>
@@ -26,34 +29,43 @@
 
     <div class="form-group">
       <label>Nombre del Grupo:</label>
-      <input type="text" id="nombreGrupo" placeholder="Nombre de la unidad/grupo...">
+      <input type="text" id="nombreGrupo" placeholder="Ej: Centinelas de la Fe">
     </div>
 
     <div class="form-group">
-      <label>Motivo de Reunión:</label>
-      <input type="text" id="motivo" placeholder="Ej: Clase semanal, Reunión GP...">
+      <label>Motivo-Reunión:</label>
+      <select id="motivo">
+        <option>Reunión Semanal</option>
+        <option>Parejas Discipuladoras</option>
+        <option>Actividad Social</option>
+        <option>Otro</option>
+      </select>
     </div>
 
-    <div class="actions">
-      <button class="btn btn-primary" onclick="marcarTodos(true)">Asistieron Todos</button>
-      <button class="btn btn-primary" onclick="marcarTodos(false)">Limpiar</button>
+    <div class="bulk-actions">
+      <button class="btn btn-secondary" onclick="marcarBloque(true)">Asistieron Todos</button>
+      <button class="btn btn-secondary" onclick="marcarBloque(false)">Limpiar</button>
     </div>
 
-    <h3 class="section-title">Bautizados</h3>
-    <table id="tablaBautizados">
-      <thead><tr><th>Nombre</th><th>Asistió</th></tr></thead>
-      <tbody></tbody>
-    </table>
+    <section>
+      <h3 class="section-title">Bautizados</h3>
+      <table id="tablaBautizados">
+        <thead><tr><th>Nombres</th><th>Asistió</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </section>
 
-    <h3 class="section-title">Amigos de Esperanza</h3>
-    <table id="tablaAmigos">
-      <thead><tr><th>Nombre</th><th>Asistió</th></tr></thead>
-      <tbody></tbody>
-    </table>
+    <section>
+      <h3 class="section-title">Amigos de Esperanza</h3>
+      <table id="tablaAmigos">
+        <thead><tr><th>Nombres</th><th>Asistió</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </section>
 
-    <div style="margin-top: 30px;">
-      <button class="btn btn-accent" id="btnEnviar" onclick="enviarDatos()">Registrar Asistencia en Google Sheets</button>
-    </div>
+    <button class="btn btn-primary main-btn" id="btnEnviar" onclick="enviarAsistencia()">
+      Guardar Asistencia
+    </button>
   </div>
 
   <script src="script.js"></script>
