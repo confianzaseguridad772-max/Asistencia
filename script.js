@@ -1,87 +1,82 @@
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzib9tCY-tH3yGtOKEzOeL6v1T4MjyGn0QnTYYNL0vHCQNNssdZb47pnykdzvGsS7OJFA/exec";
-let listaIntegrantes = [];
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyeweVUPz6dSau8ut5toIBRhOmYiyND7PmlEF2UZvoW_Aztw7zGnCJSFwk4DxEZyS3QjA/exec"; // Reemplaza con tu URL de despliegue
+let integrantes = [];
 
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('fechaActual').innerText = new Date().toLocaleDateString();
-});
+document.getElementById('fechaActual').innerText = "Fecha: " + new Date().toLocaleDateString();
 
 async function cargarLista() {
     const lider = document.getElementById('liderGp').value;
-    if (!lider) return;
-    
-    document.querySelector('#tablaBautizados tbody').innerHTML = "<tr><td colspan='2' class='empty-state'>Cargando...</td></tr>";
-    document.querySelector('#tablaAmigos tbody').innerHTML = "<tr><td colspan='2' class='empty-state'>Cargando...</td></tr>";
-
+    if(!lider) return;
     try {
         const res = await fetch(`${SCRIPT_URL}?lider=${encodeURIComponent(lider)}`);
-        listaIntegrantes = await res.json();
-        renderizarTablas();
-    } catch (e) { alert("Error al cargar datos"); }
+        integrantes = await res.json();
+        renderTablas();
+    } catch(e) { alert("Error cargando integrantes"); }
 }
 
-function renderizarTablas() {
+function renderTablas() {
     const tbB = document.querySelector('#tablaBautizados tbody');
     const tbA = document.querySelector('#tablaAmigos tbody');
     tbB.innerHTML = ''; tbA.innerHTML = '';
 
-    listaIntegrantes.forEach((p, i) => {
-        const html = `<tr><td>${p.Nombres}</td><td class="txt-right">
-            <input type="number" step="0.1" id="monto-${i}" placeholder="0.00" class="cuota-input">
-            <input type="checkbox" class="asis-check" data-index="${i}">
+    integrantes.forEach((p, i) => {
+        const esB = p.Tipo.includes("Bautizado");
+        const row = `<tr><td>${p.Nombres}</td><td style="text-align:right; display:flex; align-items:center; justify-content:flex-end">
+            ${!esB ? `<select id="cur-${i}" class="curso-sel">
+                <option>La Fe de Jesús</option><option>Yo Creo</option>
+                <option>Daniel y Apocalipsis</option><option>Otro</option>
+            </select>` : ''}
+            <input type="number" id="lec-${i}" class="lec-input" placeholder="${esB?'0-7':'1-20'}">
+            <input type="checkbox" class="check-asis" style="margin-left:10px" data-idx="${i}">
         </td></tr>`;
-        (p.Tipo && p.Tipo.trim().toLowerCase().includes("bautizado")) ? tbB.innerHTML += html : tbA.innerHTML += html;
+        esB ? tbB.innerHTML += row : tbA.innerHTML += row;
     });
 }
 
-function marcarBloque(val) {
-    document.querySelectorAll('.asis-check').forEach(c => c.checked = val);
-}
+function marcarBloque(v) { document.querySelectorAll('.check-asis').forEach(c => c.checked = v); }
 
-function enviarAsistencia() {
+function enviarDatos() {
     const btn = document.getElementById('btnEnviar');
     const lider = document.getElementById('liderGp').value;
     const grupo = document.getElementById('nombreGrupo').value;
-    
-    if (!lider || !grupo) return alert("Complete los datos requeridos");
+    if(!lider || !grupo) return alert("Complete Líder y Nombre de Grupo");
 
     btn.disabled = true;
-    btn.innerText = "Enviando...";
+    btn.innerText = "Sincronizando...";
 
-    let totales = { B: 0, A: 0 }, asis = { B: 0, A: 0 }, soles = 0, registros = [];
-    
-    listaIntegrantes.forEach((p, i) => {
-        let esB = (p.Tipo && p.Tipo.trim().toLowerCase().includes("bautizado"));
-        esB ? totales.B++ : totales.A++;
-        
-        const chk = document.querySelector(`.asis-check[data-index="${i}"]`);
-        if (chk && chk.checked) {
-            esB ? asis.B++ : asis.A++;
-            const m = parseFloat(document.getElementById(`monto-${i}`).value) || 0;
-            soles += m;
-            registros.push({
-                liderGp: lider, fecha: new Date().toLocaleDateString(), nombreGrupo: grupo,
-                motivo: document.getElementById('motivo').value, nombre: p.Nombres, 
-                sexo: p.Sexo, tipo: p.Tipo, tipoRef: esB ? "B" : "A", soles: "S/. " + m.toFixed(2)
+    let dAsist = [], dAmigos = [], nA = 0, nI = 0;
+    integrantes.forEach((p, i) => {
+        document.querySelector(`.check-asis[data-idx="${i}"]`).checked ? nA++ : nI++;
+    });
+
+    integrantes.forEach((p, i) => {
+        const asis = document.querySelector(`.check-asis[data-idx="${i}"]`).checked;
+        const lec = document.getElementById(`lec-${i}`).value || 0;
+        const esB = p.Tipo.includes("Bautizado");
+
+        if(!asis) { // SOLO INASISTENTES A HOJA "ASIST"
+            dAsist.push({
+                lider: lider, fecha: new Date().toLocaleDateString(), grupo: grupo,
+                motivo: document.getElementById('motivo').value, nombre: p.Nombres,
+                sexo: p.Sexo, tipo: p.Tipo,
+                solesLes: "S/. " + document.getElementById('totalLes').value,
+                solesOfr: "S/. " + document.getElementById('totalOfrendas').value,
+                asistentes: nA, inasistentes: nI, bautismo: document.getElementById('numBautismo').value,
+                lecLES: esB ? lec : "", lecBib: !esB ? lec : ""
             });
+        }
+
+        if(!esB && lec > 0) { // REGISTRO DE FECHA POR LECCIÓN EN HOJA "AMIGOS"
+            dAmigos.push({ nombre: p.Nombres, leccionNum: lec, fecha: new Date().toLocaleDateString() });
         }
     });
 
-    const pB = totales.B > 0 ? ((asis.B / totales.B) * 100).toFixed(1) : 0;
-    const pA = totales.A > 0 ? ((asis.A / totales.A) * 100).toFixed(1) : 0;
-
-    registros.forEach(r => r.porcentajeAsis = (r.tipoRef === "B" ? pB : pA) + "%");
-
     fetch(SCRIPT_URL, {
         method: "POST", mode: "no-cors",
-        body: JSON.stringify({ destino: "ASISTENCIA", registros: registros })
+        body: JSON.stringify({ destino: "ASISTENCIA", registrosAsist: dAsist, registrosAmigos: dAmigos })
     }).then(() => {
-        document.getElementById('resumenBautizados').innerText = `${asis.B} de ${totales.B} (${pB}%)`;
-        document.getElementById('resumenAmigos').innerText = `${asis.A} de ${totales.A} (${pA}%)`;
-        document.getElementById('resumenTotal').innerText = `S/. ${soles.toFixed(2)}`;
         document.getElementById('modalResumen').style.display = 'flex';
     }).catch(() => {
-        alert("Error al guardar");
+        alert("Error de conexión");
         btn.disabled = false;
-        btn.innerText = "Guardar Registro";
     });
 }
