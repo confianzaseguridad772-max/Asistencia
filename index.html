@@ -1,79 +1,61 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MIPES - Dashboard 2026</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control de Asistencia GP</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="main-layout">
-        <aside class="sidebar no-pdf">
-            <div class="sidebar-header">
-                <i data-lucide="layout-dashboard"></i>
-                <span>Panel Control</span>
-            </div>
-            
-            <form id="form-registro" class="admin-form">
-                <div class="form-group">
-                    <label>Seleccionar Líder</label>
-                    <select id="select-lider" required>
-                        <option value="">Elegir...</option>
-                        <option value="Cherry">1-Cherry</option>
-                        <option value="Raquel">2-Raquel</option>
-                        <option value="Tito">3-Tito</option>
-                        <option value="Ricardo">4-Ricardo</option>
-                        <option value="Charito">5-Rosario-Charito</option>
-                        <option value="Pedro">6-Pedro</option>
-                        <option value="Erika">7-Erika</option>
-                        <option value="Jafet">8-Jafet</option>
-                        <option value="Gustabo">9-Gustabo</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Indicadores Cumplidos</label>
-                    <div class="checks-list" id="grid-checks"></div>
-                </div>
-
-                <button type="submit" class="btn btn-primary">
-                    <i data-lucide="refresh-cw"></i> Actualizar
-                </button>
-                <button type="button" id="btn-pdf" class="btn btn-danger">
-                    <i data-lucide="file-down"></i> Exportar PDF
-                </button>
-            </form>
-        </aside>
-
-        <main class="content-area" id="area-impresion">
-            <header class="report-header">
-                <div class="header-info">
-                    <h1>Monitoreo de Grupos Pequeños</h1>
-                    <p><i data-lucide="calendar"></i> Marzo 2026 | Ministerio Personal y Escuela Sabática</p>
-                </div>
-                <div class="badge-year">2026</div>
-            </header>
-
-            <div class="table-card">
-                <div class="table-responsive">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Líder</th>
-                                <th>I1</th><th>I2</th><th>I3</th><th>I4</th><th>I5</th>
-                                <th>I6</th><th>I7</th><th>I8</th><th>I9</th>
-                                <th class="text-right">Progreso</th>
-                            </tr>
-                        </thead>
-                        <tbody id="body-tabla"></tbody>
-                    </table>
-                </div>
-            </div>
-        </main>
+  <div class="container">
+    <h2>Control de Asistencia GP</h2>
+    
+    <div class="form-group">
+      <label>Líder de GP:</label>
+      <select id="liderGp" onchange="cargarLista()">
+        <option value="">Seleccione un líder...</option>
+        <option>1-Cherry / Avril</option>
+        <option>2-Tito / Zuliel</option>
+        <option>3-Ricardo / Rosario</option>
+        <option>4-Pedro /Rolando</option>
+        <option>5-Erika /Valeria</option>
+        <option>6-Jafet</option>
+        <option>7-Gustabo /Jenny</option>
+      </select>
     </div>
-    <script src="script.js"></script>
-    <script>lucide.createIcons();</script>
+
+    <div class="form-group">
+      <label>Nombre del Grupo:</label>
+      <input type="text" id="nombreGrupo" placeholder="Nombre de la unidad/grupo...">
+    </div>
+
+    <div class="form-group">
+      <label>Motivo de Reunión:</label>
+      <input type="text" id="motivo" placeholder="Ej: Clase semanal, Reunión GP...">
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" onclick="marcarTodos(true)">Asistieron Todos</button>
+      <button class="btn btn-primary" onclick="marcarTodos(false)">Limpiar</button>
+    </div>
+
+    <h3 class="section-title">Bautizados</h3>
+    <table id="tablaBautizados">
+      <thead><tr><th>Nombre</th><th>Asistió</th></tr></thead>
+      <tbody></tbody>
+    </table>
+
+    <h3 class="section-title">Amigos de Esperanza</h3>
+    <table id="tablaAmigos">
+      <thead><tr><th>Nombre</th><th>Asistió</th></tr></thead>
+      <tbody></tbody>
+    </table>
+
+    <div style="margin-top: 30px;">
+      <button class="btn btn-accent" id="btnEnviar" onclick="enviarDatos()">Registrar Asistencia en Google Sheets</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
 </body>
 </html>
