@@ -1,4 +1,4 @@
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw1ZqltAwmRogSs7b2Q41PfKV5FQrTt5_uaKtBL9rLLnE6FU-qecAY0wUNBHkLX7DeksQ/exec"; 
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMTvPSScbiQ-d67ydnk6EfgWkD11MklVClrh8Z56BD2AJVNB5j6CvpWsHT7CvpF5Kbmg/exec"; 
 let integrantes = [];
 
 document.getElementById('fechaActual').innerText = new Date().toLocaleDateString();
@@ -19,7 +19,8 @@ function renderizarTablas() {
     tbB.innerHTML = ''; tbA.innerHTML = '';
 
     integrantes.forEach((p, i) => {
-        const esB = p.Tipo && p.Tipo.includes("Bautizado");
+        // Normalizamos la búsqueda de "Bautizado" sin importar mayúsculas
+        const esB = p.Tipo && p.Tipo.toString().toLowerCase().includes("bautizado");
         const html = `<tr>
             <td>${p.Nombres}</td>
             <td align="right">
@@ -44,43 +45,70 @@ function enviarDatos() {
     btn.disabled = true;
     btn.innerText = "Enviando...";
 
-    let dAsist = [], dAmigos = [], nA = 0, nI = 0;
-    
-    // Conteo para estadísticas
-    integrantes.forEach((p, i) => {
-        document.querySelector(`.check-asis[data-idx="${i}"]`).checked ? nA++ : nI++;
-    });
-    const porc = ((nA / integrantes.length) * 100).toFixed(0) + "%";
+    let inasistentesNombres = [];
+    let dAmigos = [];
+    let nA = 0, nI = 0;
+    let sumaLecBautizados = 0;
+    let sumaLecAmigos = 0;
 
     integrantes.forEach((p, i) => {
         const asis = document.querySelector(`.check-asis[data-idx="${i}"]`).checked;
-        const lec = document.getElementById(`lec-${i}`).value || 0;
-        const esB = p.Tipo && p.Tipo.includes("Bautizado");
+        const lec = parseInt(document.getElementById(`lec-${i}`).value) || 0;
+        const esBautizado = p.Tipo && p.Tipo.toString().toLowerCase().includes("bautizado");
 
-        if(!asis) { // Registro para "Asist" (solo inasistentes)
-            dAsist.push({
-                lider: lider, fecha: new Date().toLocaleDateString(), grupo: grupo,
-                motivo: document.getElementById('motivo').value, nombre: p.Nombres,
-                sexo: p.Sexo, tipo: p.Tipo, porc: porc,
-                les: "S/. " + document.getElementById('totalLes').value,
-                ofr: "S/. " + document.getElementById('totalOfrendas').value,
-                nA: nA, nI: nI, nB: document.getElementById('numBautismo').value,
-                lLES: esB ? lec : "", lBib: !esB ? lec : ""
+        if (asis) {
+            nA++;
+            if (esBautizado) sumaLecBautizados += lec;
+            else sumaLecAmigos += lec;
+        } else {
+            nI++;
+            inasistentesNombres.push(p.Nombres); // Solo guardamos nombres de faltas
+        }
+
+        // Migración a HOJA AMIGOS: Solo si NO es bautizado y tiene lección marcada
+        if (!esBautizado && lec > 0) {
+            dAmigos.push({ 
+                nombre: p.Nombres, 
+                leccionNum: lec, 
+                fecha: new Date().toLocaleDateString() 
             });
         }
-        if(!esB && lec > 0) { // Registro para "Amigos" (progreso lecciones)
-            dAmigos.push({ nombre: p.Nombres, leccionNum: lec, fecha: new Date().toLocaleDateString() });
-        }
     });
+
+    const porc = integrantes.length > 0 ? ((nA / integrantes.length) * 100).toFixed(0) + "%" : "0%";
+
+    // Objeto consolidado para la hoja "Asist"
+    const reporteAsist = {
+        lider: lider,
+        fecha: new Date().toLocaleDateString(),
+        grupo: grupo,
+        motivo: document.getElementById('motivo').value,
+        nombresInasistentes: inasistentesNombres.join(", "), // Nombres en una sola fila
+        sexoRelativo: "Mixto", 
+        tipoRelativo: "Grupal",
+        porc: porc,
+        les: "S/. " + document.getElementById('totalLes').value,
+        ofr: "S/. " + document.getElementById('totalOfrendas').value,
+        nA: nA,
+        nI: nI,
+        nB: document.getElementById('numBautismo').value,
+        lLES_Total: sumaLecBautizados,
+        lBib_Total: sumaLecAmigos
+    };
 
     fetch(SCRIPT_URL, {
         method: "POST",
         mode: "no-cors",
-        body: JSON.stringify({ destino: "ASISTENCIA", registrosAsist: dAsist, registrosAmigos: dAmigos })
+        body: JSON.stringify({ 
+            destino: "ASISTENCIA", 
+            reporteAsist: reporteAsist, 
+            registrosAmigos: dAmigos 
+        })
     }).then(() => {
         document.getElementById('modalResumen').style.display = 'flex';
     }).catch(() => {
         alert("Error de conexión");
         btn.disabled = false;
+        btn.innerText = "Guardar Reporte General";
     });
 }
