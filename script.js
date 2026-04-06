@@ -1,102 +1,95 @@
-const indicadores = [
-    "1. Sist. Lider", "2. Sist. Miembros", "3. Culto Alva", 
-    "4. Sem. Oración", "5. Maranatha", "6. Santa Cena", 
-    "7. Mi Talento", "8. Esc. Sabática", "9. Suscrito Lección"
-];
+let integrantesData = [];
 
-const lideresRef = [
-    {id: "Cherry", nombre: "1-Cherry"},
-    {id: "Raquel", nombre: "2-Raquel"},
-    {id: "Tito", nombre: "3-Tito"},
-    {id: "Ricardo", nombre: "4-Ricardo"},
-    {id: "Charito", nombre: "5-Rosario-Charito"},
-    {id: "Pedro", nombre: "6-Pedro"},
-    {id: "Erika", nombre: "7-Erika"},
-    {id: "Jafet", nombre: "8-Jafet"},
-    {id: "Gustabo", nombre: "9-Gustabo"}
-];
-
-const STORAGE_KEY = 'mipes_oficial';
-let datos = JSON.parse(localStorage.getItem(STORAGE_KEY)) || lideresRef.map(l => ({
-    ...l, 
-    checks: Array(indicadores.length).fill(false), 
-    porcentaje: 0
-}));
-
-// Generar Checkboxes en la barra lateral
-const grid = document.getElementById('grid-checks');
-grid.innerHTML = indicadores.map((ind, i) => `
-    <label class="check-item">
-        <input type="checkbox" id="ind-${i}"> <span>${ind}</span>
-    </label>
-`).join('');
-
-function renderizar() {
-    const tbody = document.getElementById('body-tabla');
-    tbody.innerHTML = datos.map(lider => {
-        const celdas = lider.checks.map(c => 
-            `<td><span class="status-pill ${c ? 'si' : 'no'}">${c ? 'SI' : 'NO'}</span></td>`
-        ).join('');
-
-        return `
-            <tr>
-                <td>
-                    <div class="leader-cell">
-                        <img src="img/${lider.id.toLowerCase()}.jpg" class="avatar" 
-                             onerror="this.src='https://ui-avatars.com/api/?name=${lider.nombre}&background=random'">
-                        <span>${lider.nombre}</span>
-                    </div>
-                </td>
-                ${celdas}
-                <td class="text-right">
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width:${lider.porcentaje}%"></div>
-                    </div>
-                    <div style="text-align:right; font-size:0.7rem; font-weight:bold; margin-top:4px">${lider.porcentaje}%</div>
-                </td>
-            </tr>
-        `;
-    }).join('');
+function cargarLista() {
+  const lider = document.getElementById('liderGp').value;
+  if (!lider) return;
+  
+  // Llama a la función del servidor en Google Apps Script
+  google.script.run.withSuccessHandler(function(data) {
+    integrantesData = data;
+    renderizarTablas();
+  }).getIntegrantes(lider);
 }
 
-// Guardar Datos
-document.getElementById('form-registro').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const idLider = document.getElementById('select-lider').value;
-    if(!idLider) return;
+function renderizarTablas() {
+  const tbodyB = document.querySelector('#tablaBautizados tbody');
+  const tbodyA = document.querySelector('#tablaAmigos tbody');
+  tbodyB.innerHTML = '';
+  tbodyA.innerHTML = '';
 
-    const nuevosChecks = indicadores.map((_, i) => document.getElementById(`ind-${i}`).checked);
-    const totalSi = nuevosChecks.filter(Boolean).length;
-    const porcentaje = ((totalSi / indicadores.length) * 100).toFixed(1);
-
-    const idx = datos.findIndex(l => l.id === idLider);
-    if (idx !== -1) {
-        datos[idx].checks = nuevosChecks;
-        datos[idx].porcentaje = porcentaje;
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(datos));
-        renderizar();
-        e.target.reset();
-        alert('¡Actualizado con éxito!');
-    }
-});
-
-// Función PDF Mejorada
-document.getElementById('btn-pdf').addEventListener('click', () => {
-    const elemento = document.getElementById('area-impresion');
+  integrantesData.forEach((persona, index) => {
+    const row = `<tr>
+      <td>${persona.nombreCompleto}</td>
+      <td style="text-align:center"><input type="checkbox" class="chk-asistencia" data-index="${index}"></td>
+    </tr>`;
     
-    const opciones = {
-        margin: [10, 10, 10, 10],
-        filename: `MIPES_Reporte_2026.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-            scale: 2, 
-            useCORS: true,
-            logging: false
-        },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-    };
+    if (persona.tipo === "Bautizado") {
+      tbodyB.innerHTML += row;
+    } else {
+      tbodyA.innerHTML += row;
+    }
+  });
+}
 
-    html2pdf().set(opciones).from(elemento).save();
-});
+function marcarTodos(estado) {
+  document.querySelectorAll('.chk-asistencia').forEach(chk => chk.checked = estado);
+}
 
-renderizar();
+function enviarDatos() {
+  const btn = document.getElementById('btnEnviar');
+  const lider = document.getElementById('liderGp').value;
+  const nombreGrupo = document.getElementById('nombreGrupo').value;
+  const motivo = document.getElementById('motivo').value;
+
+  if(!lider || !nombreGrupo) {
+    alert("Por favor rellene el Líder y Nombre del Grupo");
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerText = "Registrando...";
+
+  const fecha = new Date().toLocaleDateString();
+  const checkboxes = document.querySelectorAll('.chk-asistencia');
+  
+  let registroFinal = [];
+  let conteo = { 
+    "Bautizado": { total: 0, asis: 0 }, 
+    "Amigos de Esperanza": { total: 0, asis: 0 } 
+  };
+
+  // Primero contamos totales para el porcentaje
+  integrantesData.forEach(p => {
+    if (conteo[p.tipo]) conteo[p.tipo].total++;
+  });
+
+  // Procesamos marcados
+  checkboxes.forEach(chk => {
+    const idx = chk.dataset.index;
+    const p = integrantesData[idx];
+    if (chk.checked) {
+      conteo[p.tipo].asis++;
+      registroFinal.push({
+        liderGp: lider,
+        fecha: fecha,
+        nombreGrupo: nombreGrupo,
+        motivo: motivo,
+        nombre: p.nombreCompleto,
+        sexo: p.sexo,
+        tipo: p.tipo
+      });
+    }
+  });
+
+  // Añadimos el % calculado a cada registro
+  registroFinal.forEach(reg => {
+    const totalTipo = conteo[reg.tipo].total;
+    const asistTipo = conteo[reg.tipo].asis;
+    reg.porcentajeAsis = ((asistTipo / totalTipo) * 100).toFixed(2) + "%";
+  });
+
+  google.script.run.withSuccessHandler(function(res) {
+    alert(res);
+    location.reload();
+  }).registrarAsistencia(registroFinal);
+}
