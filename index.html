@@ -3,68 +3,61 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GP SERVIR 2026 | Asistencia</title>
+  <title>GP SERVIR 2026</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div class="main-wrapper">
-    <div class="container">
-      <header class="main-header">
-        <div class="logo-area"><h1>📊 Asistencia GP</h1></div>
-        <div class="date-badge" id="fechaActual"></div>
-      </header>
-      
-      <section class="config-card">
-        <div class="input-grid">
-          <div class="form-group">
-            <label>👤 Líder de GP</label>
-            <select id="liderGp" onchange="cargarLista()">
-              <option value="">Seleccione...</option>
-              <option>1-Cherry / Avril</option><option>2-Tito / Zuliel</option>
-              <option>3-Ricardo / Rosario</option><option>4-Pedro /Rolando</option>
-              <option>5-Erika /Valeria</option><option>6-Jafet</option>
-              <option>7-Gustabo /Jenny</option>
-            </select>
-          </div>
-          <div class="form-group"><label>🏠 Nombre del Grupo</label><input type="text" id="nombreGrupo" placeholder="Ej. Centinelas"></div>
-          <div class="form-group">
-            <label>📅 Motivo</label>
-            <select id="motivo"><option>Reunión Semanal</option><option>Parejas Discipuladoras</option><option>Actividad Social</option></select>
-          </div>
+  <div class="container">
+    <header>
+      <h1>📊 Control GP 2026</h1>
+      <div id="fechaActual" class="badge"></div>
+    </header>
+    
+    <section class="card">
+      <div class="grid">
+        <div class="field">
+          <label>Líder de GP</label>
+          <select id="liderGp" onchange="cargarLista()">
+            <option value="">Seleccione...</option>
+            <option>1-Cherry / Avril</option><option>2-Tito / Zuliel</option>
+            <option>3-Ricardo / Rosario</option><option>4-Pedro / Rolando</option>
+            <option>5-Erika / Valeria</option><option>6-Jafet</option>
+            <option>7-Gustabo / Jenny</option>
+          </select>
         </div>
-
-        <div class="input-grid extra-fields">
-          <div class="form-group"><label>💰 S/. LES TOTAL</label><input type="number" id="totalLes" step="0.1" value="0"></div>
-          <div class="form-group"><label>🪙 S/. OFRENDAS</label><input type="number" id="totalOfrendas" step="0.1" value="0"></div>
-          <div class="form-group"><label>🌊 N° BAUTISMO</label><input type="number" id="numBautismo" value="0"></div>
+        <div class="field"><label>Nombre Grupo</label><input type="text" id="nombreGrupo"></div>
+        <div class="field">
+          <label>Motivo</label>
+          <select id="motivo"><option>Reunión Semanal</option><option>Parejas Discipuladoras</option><option>Actividad Social</option></select>
         </div>
-      </section>
-
-      <div class="action-bar">
-        <button class="btn-action all" onclick="marcarBloque(true)">✅ Todos Asistieron</button>
-        <button class="btn-action none" onclick="marcarBloque(false)">❌ Limpiar</button>
       </div>
+      <div class="grid stats">
+        <div class="field"><label>S/. LES</label><input type="number" id="totalLes" value="0"></div>
+        <div class="field"><label>S/. OFR</label><input type="number" id="totalOfr" value="0"></div>
+        <div class="field"><label>BAUTISMOS</label><input type="number" id="nBaut" value="0"></div>
+      </div>
+    </section>
 
-      <section class="table-section">
-        <h3 class="table-title bautizados">⭐ Bautizados (Estudio LES)</h3>
-        <div class="scroll-area"><table id="tablaBautizados"><tbody></tbody></table></div>
-      </section>
-
-      <section class="table-section">
-        <h3 class="table-title amigos">🌱 Amigos (Estudio Bíblico)</h3>
-        <div class="scroll-area"><table id="tablaAmigos"><tbody></tbody></table></div>
-      </section>
-
-      <button class="btn-submit" id="btnEnviar" onclick="enviarDatos()">Guardar Reporte</button>
+    <div class="buttons">
+      <button onclick="marcarTodos(true)">✅ Todos</button>
+      <button onclick="marcarTodos(false)">❌ Limpiar</button>
     </div>
+
+    <h3 class="t-bautizados">⭐ Bautizados (Estudio LES)</h3>
+    <div class="table-wrap"><table id="tabB"><tbody></tbody></table></div>
+
+    <h3 class="t-amigos">🌱 Amigos (Curso Bíblico)</h3>
+    <div class="table-wrap"><table id="tabA"><tbody></tbody></table></div>
+
+    <button id="btnEnviar" class="main-btn" onclick="enviarReporte()">Guardar Reporte</button>
   </div>
 
-  <div id="modalResumen" class="modal-overlay">
+  <div id="modal" class="modal">
     <div class="modal-content">
-      <div class="modal-header"><h2>¡Registro Exitoso!</h2></div>
-      <div class="modal-body"><p>Se migraron los inasistentes a <b>Asist</b> y los avances a <b>Amigos</b>.</p></div>
-      <button class="btn-modal-close" onclick="location.reload()">Aceptar</button>
+      <h2>¡Guardado!</h2>
+      <p>Reporte enviado a <b>Asist</b> y <b>Amigos</b>.</p>
+      <button onclick="location.reload()">Aceptar</button>
     </div>
   </div>
   <script src="script.js"></script>
