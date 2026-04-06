@@ -1,63 +1,72 @@
-const URL = "https://script.google.com/macros/s/AKfycbydT4norXCFrbM3_VV0HqcqLvRhsvU88NDOo5z9CPlnq_Pz8rCOMzfhid8cAidr2L_0zA/exec"; 
-let lista = [];
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw1ZqltAwmRogSs7b2Q41PfKV5FQrTt5_uaKtBL9rLLnE6FU-qecAY0wUNBHkLX7DeksQ/exec"; // ¡IMPORTANTE: CAMBIA ESTO!
+let listaGlobal = [];
 
-document.getElementById('fechaActual').innerText = new Date().toLocaleDateString();
+document.getElementById('fechaHoy').innerText = new Date().toLocaleDateString();
 
-async function cargarLista() {
-    const lider = document.getElementById('liderGp').value;
+// Función para traer integrantes de Google Sheets
+async function obtenerIntegrantes() {
+    const lider = document.getElementById('selLider').value;
     if(!lider) return;
-    const r = await fetch(`${URL}?lider=${encodeURIComponent(lider)}`);
-    lista = await r.json();
-    const tbB = document.querySelector('#tabB tbody');
-    const tbA = document.querySelector('#tabA tbody');
-    tbB.innerHTML = ''; tbA.innerHTML = '';
+    
+    try {
+        const resp = await fetch(`${SCRIPT_URL}?lider=${encodeURIComponent(lider)}`);
+        listaGlobal = await resp.json();
+        
+        const tbB = document.querySelector('#tabBautizados tbody');
+        const tbA = document.querySelector('#tabAmigos tbody');
+        tbB.innerHTML = ''; tbA.innerHTML = '';
 
-    lista.forEach((p, i) => {
-        const esB = p.Tipo.includes("Bautizado");
-        const html = `<tr><td>${p.Nombres}</td><td align="right">
-            <input type="number" id="lec-${i}" style="width:40px" placeholder="L">
-            <input type="checkbox" class="check" data-idx="${i}">
-        </td></tr>`;
-        esB ? tbB.innerHTML += html : tbA.innerHTML += html;
-    });
+        listaGlobal.forEach((p, i) => {
+            const esB = p.Tipo.includes("Bautizado");
+            const html = `<tr><td>${p.Nombres}</td><td align="right">
+                <input type="number" id="lec-${i}" style="width:45px" placeholder="Lec">
+                <input type="checkbox" class="chk-asis" data-idx="${i}">
+            </td></tr>`;
+            esB ? tbB.innerHTML += html : tbA.innerHTML += html;
+        });
+    } catch(e) { alert("Error al cargar lista"); }
 }
 
-function marcarTodos(v) { document.querySelectorAll('.check').forEach(c => c.checked = v); }
+function marcarTodos(v) { document.querySelectorAll('.chk-asis').forEach(c => c.checked = v); }
 
-function enviarReporte() {
-    const btn = document.getElementById('btnEnviar');
-    btn.disabled = true;
-    btn.innerText = "Enviando...";
+async function procesarEnvio() {
+    const lider = document.getElementById('selLider').value;
+    const grupo = document.getElementById('inpGrupo').value;
+    if(!lider || !grupo) return alert("Complete Líder y Grupo");
 
-    let dAsis = [], dAmigos = [], nA = 0, nI = 0;
-    lista.forEach((p, i) => {
-        document.querySelector(`.check[data-idx="${i}"]`).checked ? nA++ : nI++;
+    document.getElementById('loading').style.display = 'flex';
+    
+    let dAsist = [], dAmigos = [], nA = 0, nI = 0;
+    listaGlobal.forEach((p, i) => {
+        document.querySelector(`.chk-asis[data-idx="${i}"]`).checked ? nA++ : nI++;
     });
 
-    const porc = ((nA / lista.length) * 100).toFixed(0) + "%";
+    const porc = ((nA / listaGlobal.length) * 100).toFixed(0) + "%";
 
-    lista.forEach((p, i) => {
-        const asis = document.querySelector(`.check[data-idx="${i}"]`).checked;
+    listaGlobal.forEach((p, i) => {
+        const asis = document.querySelector(`.chk-asis[data-idx="${i}"]`).checked;
         const lec = document.getElementById(`lec-${i}`).value || 0;
         const esB = p.Tipo.includes("Bautizado");
 
-        if(!asis) { // Inasistentes para "Asist"
+        if(!asis) { // Si NO asistió, va a la hoja Asist
             dAsist.push({
-                lider: document.getElementById('liderGp').value, fecha: new Date().toLocaleDateString(),
-                grupo: document.getElementById('nombreGrupo').value, motivo: document.getElementById('motivo').value,
-                nombre: p.Nombres, sexo: p.Sexo, tipo: p.Tipo, porcentaje: porc,
-                lesTotal: document.getElementById('totalLes').value, ofrenda: document.getElementById('totalOfr').value,
-                nAsis: nA, nInasis: nI, bautismos: document.getElementById('nBaut').value,
-                lecLES: esB ? lec : "", lecBib: !esB ? lec : ""
+                lider: lider, fecha: new Date().toLocaleDateString(), grupo: grupo, motivo: "Sabatica",
+                nombre: p.Nombres, sexo: p.Sexo, tipo: p.Tipo, porc: porc,
+                les: document.getElementById('inpLes').value, ofr: document.getElementById('inpOfr').value,
+                nA: nA, nI: nI, nB: document.getElementById('inpBaut').value,
+                lLES: esB ? lec : "", lBib: !esB ? lec : ""
             });
         }
-        if(!esB && lec > 0) { // Avances para "Amigos"
+        if(!esB && lec > 0) { // Si es Amigo y tiene lección, actualiza Amigos
             dAmigos.push({ nombre: p.Nombres, leccionNum: lec, fecha: new Date().toLocaleDateString() });
         }
     });
 
-    fetch(URL, {
+    await fetch(SCRIPT_URL, {
         method: "POST", mode: "no-cors",
         body: JSON.stringify({ destino: "ASISTENCIA", registrosAsist: dAsist, registrosAmigos: dAmigos })
-    }).then(() => document.getElementById('modal').style.display = 'flex');
+    });
+
+    alert("¡Reporte Enviado!");
+    location.reload();
 }
