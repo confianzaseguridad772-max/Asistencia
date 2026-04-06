@@ -21,8 +21,8 @@ async function cargarLista() {
     const tbodyA = document.querySelector('#tablaAmigos tbody');
     
     // Mensaje visual de carga
-    tbodyB.innerHTML = "<tr><td colspan='2'>Buscando integrantes...</td></tr>";
-    tbodyA.innerHTML = "<tr><td colspan='2'>Buscando integrantes...</td></tr>";
+    tbodyB.innerHTML = "<tr><td colspan='2' class='empty-msg'>Buscando integrantes...</td></tr>";
+    tbodyA.innerHTML = "<tr><td colspan='2' class='empty-msg'>Buscando integrantes...</td></tr>";
 
     try {
         const response = await fetch(`${SCRIPT_URL}?lider=${encodeURIComponent(lider)}`);
@@ -30,7 +30,7 @@ async function cargarLista() {
         renderizarTablas();
     } catch (error) {
         console.error("Error al cargar:", error);
-        alert("No se pudo conectar con la base de datos. Verifique su conexión.");
+        alert("No se pudo conectar con la base de datos.");
     }
 }
 
@@ -44,7 +44,7 @@ function renderizarTablas() {
     tbodyA.innerHTML = '';
 
     if (listaIntegrantes.length === 0) {
-        tbodyB.innerHTML = "<tr><td colspan='2'>No hay integrantes para este líder.</td></tr>";
+        tbodyB.innerHTML = "<tr><td colspan='2' class='empty-msg'>No hay integrantes para este líder.</td></tr>";
         return;
     }
 
@@ -53,13 +53,14 @@ function renderizarTablas() {
             <tr>
                 <td>${persona.Nombres}</td>
                 <td style="text-align:right">
-                    <input type="number" step="0.10" class="cuota-input" id="monto-${index}" placeholder="S/." style="width:60px; margin-right:10px; border-radius:5px; border:1px solid #ccc;">
-                    <input type="checkbox" class="asis-check" data-index="${index}" style="transform: scale(1.3);">
+                    <input type="number" step="0.10" class="cuota-input" id="monto-${index}" placeholder="S/." style="width:65px; margin-right:10px;">
+                    <input type="checkbox" class="asis-check" data-index="${index}">
                 </td>
             </tr>`;
         
         // Clasificación según la columna "Tipo" del Excel
-        if (persona.Tipo === "Bautizado") {
+        // Se usa una comparación flexible por si hay espacios o variaciones en el texto
+        if (persona.Tipo && persona.Tipo.trim().toLowerCase().includes("bautizado")) {
             tbodyB.innerHTML += filaHtml;
         } else {
             tbodyA.innerHTML += filaHtml;
@@ -96,10 +97,10 @@ function enviarAsistencia() {
     const fechaEnvio = new Date().toLocaleDateString();
     const checks = document.querySelectorAll('.asis-check');
     
-    // 1. Calcular totales del padrón para sacar el % exacto
+    // 1. Calcular totales del padrón para sacar el % exacto por categoría
     let totalesPorTipo = { "Bautizado": 0, "Amigo de esperanza": 0 };
     listaIntegrantes.forEach(p => {
-        let t = (p.Tipo === "Bautizado") ? "Bautizado" : "Amigo de esperanza";
+        let t = (p.Tipo && p.Tipo.trim().toLowerCase().includes("bautizado")) ? "Bautizado" : "Amigo de esperanza";
         totalesPorTipo[t]++;
     });
 
@@ -111,12 +112,13 @@ function enviarAsistencia() {
         if (chk.checked) {
             const idx = chk.dataset.index;
             const p = listaIntegrantes[idx];
-            let t = (p.Tipo === "Bautizado") ? "Bautizado" : "Amigo de esperanza";
+            let t = (p.Tipo && p.Tipo.trim().toLowerCase().includes("bautizado")) ? "Bautizado" : "Amigo de esperanza";
             
             asistieronPorTipo[t]++;
             
-            // Capturar el monto S/.LES individual
-            const montoIndividual = document.getElementById(`monto-${idx}`).value || "0.00";
+            // Capturar el monto S/.LES individual desde el input correspondiente
+            const inputMonto = document.getElementById(`monto-${idx}`);
+            const montoIndividual = (inputMonto && inputMonto.value) ? inputMonto.value : "0.00";
             
             registrosParaEnviar.push({
                 liderGp: lider,
@@ -126,8 +128,8 @@ function enviarAsistencia() {
                 nombre: p.Nombres,
                 sexo: p.Sexo,
                 tipo: p.Tipo,
-                tipoRef: t, // Referencia para el cálculo de %
-                soles: montoIndividual
+                tipoRef: t, // Referencia interna para el cálculo de %
+                soles: "S/. " + montoIndividual
             });
         }
     });
@@ -143,10 +145,10 @@ function enviarAsistencia() {
     registrosParaEnviar.forEach(reg => {
         const total = totalesPorTipo[reg.tipoRef];
         const asis = asistieronPorTipo[reg.tipoRef];
-        reg.porcentajeAsis = ((asis / total) * 100).toFixed(1) + "%";
+        reg.porcentajeAsis = total > 0 ? ((asis / total) * 100).toFixed(1) + "%" : "0%";
     });
 
-    // 4. Envío de datos al Google Sheets
+    // 4. Envío de datos al Google Sheets mediante POST
     fetch(SCRIPT_URL, {
         method: "POST",
         mode: "no-cors", 
@@ -159,7 +161,7 @@ function enviarAsistencia() {
         })
     })
     .then(() => {
-        alert("¡Éxito! La asistencia y montos S/.LES se registraron en la hoja 'Asist'.");
+        alert("¡Éxito! Los datos se registraron correctamente en la hoja 'Asist'.");
         location.reload(); 
     })
     .catch(err => {
