@@ -1,19 +1,19 @@
-:root { --primary: #1a73e8; --amigo: #00897b; --bg: #f8f9fa; }
-body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); margin: 0; padding: 10px; color: #202124; }
-.container { background: white; border-radius: 16px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); max-width: 800px; margin: auto; }
-.input-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 15px; }
-.form-group label { display: block; font-size: 11px; font-weight: 800; color: #5f6368; margin-bottom: 5px; text-transform: uppercase; }
-input, select { width: 100%; padding: 11px; border: 1.5px solid #e0e0e0; border-radius: 10px; font-size: 13px; outline: none; transition: 0.3s; }
-input:focus { border-color: var(--primary); }
-.table-section { margin-top: 20px; }
-.table-title { padding: 12px; color: white; border-radius: 10px 10px 0 0; margin: 0; font-size: 14px; font-weight: 600; }
-.bautizados { background: var(--primary); }
-.amigos { background: var(--amigo); }
-.scroll-area { border: 1.5px solid #e0e0e0; border-radius: 0 0 10px 10px; overflow-x: auto; }
+:root { --blue: #1a73e8; --teal: #00897b; }
+body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f0f2f5; margin: 0; padding: 10px; }
+.container { max-width: 600px; margin: auto; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; margin-bottom: 15px; }
+.badge { background: #e8f0fe; color: var(--blue); padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+.grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+.field label { display: block; font-size: 10px; font-weight: 800; color: #666; margin-bottom: 3px; text-transform: uppercase; }
+input, select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 13px; }
+.buttons { margin-bottom: 15px; display: flex; gap: 10px; }
+.buttons button { flex: 1; padding: 8px; border: none; border-radius: 6px; cursor: pointer; background: #eee; font-weight: bold; }
+h3 { padding: 8px; color: white; border-radius: 6px 6px 0 0; margin: 15px 0 0 0; font-size: 14px; }
+.t-bautizados { background: var(--blue); }
+.t-amigos { background: var(--teal); }
+.table-wrap { border: 1px solid #ddd; border-radius: 0 0 6px 6px; max-height: 300px; overflow-y: auto; }
 table { width: 100%; border-collapse: collapse; }
-td { padding: 12px; border-bottom: 1px solid #f1f3f4; font-size: 13px; }
-.curso-sel { width: 95px; font-size: 11px; padding: 5px; margin-right: 5px; }
-.lec-input { width: 45px; text-align: center; padding: 6px; }
-.btn-submit { width: 100%; background: var(--primary); color: white; border: none; padding: 16px; border-radius: 12px; font-weight: 700; margin-top: 25px; cursor: pointer; font-size: 15px; }
-.modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 1000; }
-.modal-content { background: white; padding: 30px; border-radius: 20px; text-align: center; width: 85%; max-width: 350px; }
+td { padding: 10px; border-bottom: 1px solid #eee; font-size: 13px; }
+.main-btn { width: 100%; padding: 15px; background: var(--blue); color: white; border: none; border-radius: 8px; font-weight: bold; margin-top: 20px; cursor: pointer; }
+.modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; }
+.modal-content { background:white; padding:25px; border-radius:12px; text-align:center; }
