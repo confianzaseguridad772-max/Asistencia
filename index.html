@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GP SERVIR 2026 | Asistencia</title>
+  <title>GP SERVIR 2026 | Gestión</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
@@ -74,10 +74,7 @@
         <div class="scroll-area">
           <table id="tablaBautizados">
             <thead>
-              <tr>
-                <th>Nombre</th>
-                <th style="text-align:right">Lec. / Asist.</th>
-              </tr>
+              <tr><th>Nombre</th><th style="text-align:right">Lec. / Asist.</th></tr>
             </thead>
             <tbody></tbody>
           </table>
@@ -89,10 +86,7 @@
         <div class="scroll-area">
           <table id="tablaAmigos">
             <thead>
-              <tr>
-                <th>Nombre</th>
-                <th style="text-align:right">Lec. / Asist.</th>
-              </tr>
+              <tr><th>Nombre</th><th style="text-align:right">Lec. / Asist.</th></tr>
             </thead>
             <tbody></tbody>
           </table>
@@ -105,10 +99,9 @@
 
   <div id="modalResumen" class="modal-overlay">
     <div class="modal-content">
-      <div class="success-icon">✔</div>
-      <h2>¡Sincronizado!</h2>
-      <p>Los datos se guardaron en las pestañas <b>Asist</b> y <b>Amigos</b>.</p>
-      <button class="btn-modal-close" onclick="location.reload()">Finalizar</button>
+      <h2>¡Éxito!</h2>
+      <p>Datos enviados a <b>Asist</b> y <b>Amigos</b>.</p>
+      <button class="btn-modal-close" onclick="location.reload()">Aceptar</button>
     </div>
   </div>
 
