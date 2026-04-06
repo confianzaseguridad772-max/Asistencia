@@ -1,135 +1,133 @@
-:root {
-  --primary: #1a73e8;
-  --amigo: #00897b;
-  --bg: #f1f3f4;
-  --text: #202124;
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydT4norXCFrbM3_VV0HqcqLvRhsvU88NDOo5z9CPlnq_Pz8rCOMzfhid8cAidr2L_0zA/exec"; 
+let integrantes = [];
+
+// Mostrar fecha de hoy
+document.getElementById('fechaActual').innerText = new Date().toLocaleDateString();
+
+// 1. Cargar integrantes cuando se elige líder
+async function cargarLista() {
+    const lider = document.getElementById('liderGp').value;
+    if(!lider) return;
+    
+    try {
+        const response = await fetch(`${SCRIPT_URL}?lider=${encodeURIComponent(lider)}`);
+        integrantes = await response.json();
+        dibujarTablas();
+    } catch (e) {
+        alert("Error al conectar con la base de datos");
+    }
 }
 
-body {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  background-color: var(--bg);
-  margin: 0;
-  padding: 10px;
-  color: var(--text);
+// 2. Dibujar las tablas filtradas
+function dibujarTablas() {
+    const cuerpoB = document.querySelector('#tablaBautizados tbody');
+    const cuerpoA = document.querySelector('#tablaAmigos tbody');
+    cuerpoB.innerHTML = '';
+    cuerpoA.innerHTML = '';
+
+    integrantes.forEach((persona, index) => {
+        const esBautizado = persona.Tipo && persona.Tipo.includes("Bautizado");
+        
+        const fila = `
+            <tr>
+                <td>${persona.Nombres}</td>
+                <td style="text-align:right">
+                    <input type="number" id="lec-${index}" class="lec-input" placeholder="Lec">
+                    <input type="checkbox" class="check-asis" data-idx="${index}">
+                </td>
+            </tr>
+        `;
+
+        if (esBautizado) {
+            cuerpoB.innerHTML += fila;
+        } else {
+            cuerpoA.innerHTML += fila;
+        }
+    });
 }
 
-.container {
-  background: white;
-  border-radius: 20px;
-  padding: 20px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-  max-width: 700px;
-  margin: auto;
+// 3. Marcar/Desmarcar todos
+function marcarBloque(valor) {
+    document.querySelectorAll('.check-asis').forEach(checkbox => {
+        checkbox.checked = valor;
+    });
 }
 
-.main-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 25px;
-  border-bottom: 2px solid #f1f3f4;
-  padding-bottom: 15px;
-}
+// 4. Enviar datos al Servidor
+function enviarDatos() {
+    const btn = document.getElementById('btnEnviar');
+    const lider = document.getElementById('liderGp').value;
+    const grupo = document.getElementById('nombreGrupo').value;
 
-.main-header h1 { font-size: 20px; margin: 0; font-weight: 800; color: var(--primary); }
-.main-header p { font-size: 12px; margin: 0; color: #5f6368; }
+    if (!lider || !grupo) {
+        alert("Por favor, selecciona un Líder y escribe el nombre del Grupo.");
+        return;
+    }
 
-.date-badge {
-  background: #e8f0fe;
-  color: var(--primary);
-  padding: 8px 15px;
-  border-radius: 30px;
-  font-size: 13px;
-  font-weight: bold;
-}
+    btn.disabled = true;
+    btn.innerText = "Guardando en Excel...";
 
-.config-card { background: #f8f9fa; padding: 15px; border-radius: 12px; margin-bottom: 20px; }
+    let dAsist = [], dAmigos = [], nAsis = 0, nInasis = 0;
 
-.input-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 15px;
-  margin-bottom: 15px;
-}
+    // Conteo rápido para el porcentaje
+    integrantes.forEach((p, i) => {
+        const check = document.querySelector(`.check-asis[data-idx="${i}"]`);
+        check.checked ? nAsis++ : nInasis++;
+    });
 
-.form-group label {
-  display: block;
-  font-size: 11px;
-  font-weight: 800;
-  color: #5f6368;
-  margin-bottom: 6px;
-  text-transform: uppercase;
-}
+    const porcentaje = ((nAsis / integrantes.length) * 100).toFixed(0) + "%";
 
-input, select {
-  width: 100%;
-  padding: 12px;
-  border: 1.5px solid #dadce0;
-  border-radius: 10px;
-  font-size: 14px;
-  box-sizing: border-box;
-}
+    // Preparar registros
+    integrantes.forEach((p, i) => {
+        const asiste = document.querySelector(`.check-asis[data-idx="${i}"]`).checked;
+        const leccion = document.getElementById(`lec-${i}`).value || 0;
+        const esB = p.Tipo && p.Tipo.includes("Bautizado");
 
-.action-bar { display: flex; gap: 10px; margin-bottom: 20px; }
-.btn-action {
-  flex: 1;
-  padding: 10px;
-  border: none;
-  border-radius: 8px;
-  font-weight: bold;
-  cursor: pointer;
-  font-size: 13px;
-}
-.btn-action.all { background: #e6f4ea; color: #1e8e3e; }
-.btn-action.none { background: #fce8e6; color: #d93025; }
+        // Regla: Enviar a "Asist" solo los INASISTENTES (según tu requerimiento anterior)
+        if (!asiste) {
+            dAsist.push({
+                lider: lider,
+                fecha: new Date().toLocaleDateString(),
+                grupo: grupo,
+                motivo: document.getElementById('motivo').value,
+                nombre: p.Nombres,
+                sexo: p.Sexo,
+                tipo: p.Tipo,
+                porcentaje: porcentaje,
+                lesTotal: "S/. " + document.getElementById('totalLes').value,
+                ofrenda: "S/. " + document.getElementById('totalOfrendas').value,
+                nAsis: nAsis,
+                nInasis: nInasis,
+                bautismos: document.getElementById('numBautismo').value,
+                lecLES: esB ? leccion : "",
+                lecBib: !esB ? leccion : ""
+            });
+        }
 
-.table-section { margin-top: 25px; }
-.table-title { padding: 12px; color: white; border-radius: 12px 12px 0 0; margin: 0; font-size: 14px; }
-.bautizados { background: var(--primary); }
-.amigos { background: var(--amigo); }
+        // Regla: Si es Amigo y tiene número de lección, enviar a "Amigos"
+        if (!esB && leccion > 0) {
+            dAmigos.push({
+                nombre: p.Nombres,
+                leccionNum: leccion,
+                fecha: new Date().toLocaleDateString()
+            });
+        }
+    });
 
-.scroll-area {
-  border: 1.5px solid #dadce0;
-  border-radius: 0 0 12px 12px;
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-table { width: 100%; border-collapse: collapse; }
-th { background: #f8f9fa; font-size: 11px; text-align: left; padding: 10px; color: #5f6368; }
-td { padding: 12px; border-bottom: 1px solid #f1f3f4; font-size: 14px; }
-
-.lec-input { width: 50px; text-align: center; padding: 6px; border-radius: 6px; border: 1px solid #ccc; margin-right: 10px; }
-.check-asis { transform: scale(1.4); cursor: pointer; }
-
-.btn-submit {
-  width: 100%;
-  background: var(--primary);
-  color: white;
-  border: none;
-  padding: 18px;
-  border-radius: 15px;
-  font-weight: 800;
-  font-size: 16px;
-  margin-top: 30px;
-  cursor: pointer;
-  box-shadow: 0 4px 15px rgba(26, 115, 232, 0.3);
-}
-
-.modal-overlay {
-  display: none;
-  position: fixed;
-  top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0,0,0,0.7);
-  align-items: center; justify-content: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: white;
-  padding: 30px;
-  border-radius: 20px;
-  text-align: center;
-  width: 80%;
-  max-width: 350px;
+    // Enviar por POST
+    fetch(SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify({
+            destino: "ASISTENCIA",
+            registrosAsist: dAsist,
+            registrosAmigos: dAmigos
+        })
+    }).then(() => {
+        document.getElementById('modalResumen').style.display = 'flex';
+    }).catch(err => {
+        alert("Error: " + err);
+        btn.disabled = false;
+        btn.innerText = "Guardar Reporte General";
+    });
 }
