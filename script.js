@@ -1,112 +1,170 @@
+// URL de tu última implementación de Apps Script
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydzLKrDpZcN_2THNkPGKyhA9Pab4vdLBcMeEFtlX91j9ruuv6LFeYO8eFS41-v7Bq1bQ/exec";
 let listaIntegrantes = [];
 
-document.getElementById('fechaActual').innerText = "Fecha: " + new Date().toLocaleDateString();
+// Mostrar fecha actual al cargar
+document.addEventListener('DOMContentLoaded', () => {
+    const fechaElemento = document.getElementById('fechaActual');
+    if (fechaElemento) {
+        fechaElemento.innerText = "Fecha: " + new Date().toLocaleDateString();
+    }
+});
 
-// Función para cargar los integrantes desde el Sheets
+/**
+ * Carga la lista de integrantes desde la hoja "Padron" filtrando por el Líder seleccionado
+ */
 async function cargarLista() {
     const lider = document.getElementById('liderGp').value;
     if (!lider) return;
 
+    // Referencias a las tablas
     const tbodyB = document.querySelector('#tablaBautizados tbody');
     const tbodyA = document.querySelector('#tablaAmigos tbody');
-    tbodyB.innerHTML = "<tr><td colspan='2'>Cargando integrantes...</td></tr>";
-    tbodyA.innerHTML = "<tr><td colspan='2'>Cargando integrantes...</td></tr>";
+    
+    // Mensaje de carga
+    tbodyB.innerHTML = "<tr><td colspan='2'>Buscando integrantes...</td></tr>";
+    tbodyA.innerHTML = "<tr><td colspan='2'>Buscando integrantes...</td></tr>";
 
     try {
+        // Petición GET al script con el parámetro lider
         const response = await fetch(`${SCRIPT_URL}?lider=${encodeURIComponent(lider)}`);
         listaIntegrantes = await response.json();
         renderizarTablas();
     } catch (error) {
-        alert("Error al obtener datos. Verifique su conexión.");
-        console.error(error);
+        console.error("Error al cargar:", error);
+        alert("No se pudo conectar con la base de datos. Verifique la URL del Script.");
     }
 }
 
+/**
+ * Dibuja los nombres en las tablas correspondientes
+ */
 function renderizarTablas() {
     const tbodyB = document.querySelector('#tablaBautizados tbody');
     const tbodyA = document.querySelector('#tablaAmigos tbody');
     tbodyB.innerHTML = '';
     tbodyA.innerHTML = '';
 
+    if (listaIntegrantes.length === 0) {
+        tbodyB.innerHTML = "<tr><td colspan='2'>No hay integrantes registrados.</td></tr>";
+        return;
+    }
+
     listaIntegrantes.forEach((persona, index) => {
-        const row = `<tr>
-            <td>${persona.Nombres}</td>
-            <td style="text-align:right"><input type="checkbox" class="asis-check" data-index="${index}"></td>
-        </tr>`;
+        const filaHtml = `
+            <tr>
+                <td>${persona.Nombres}</td>
+                <td style="text-align:right">
+                    <input type="checkbox" class="asis-check" data-index="${index}">
+                </td>
+            </tr>`;
         
-        // Clasificación por tipo
+        // Clasificar según la columna "Tipo" de tu Excel
         if (persona.Tipo === "Bautizado") {
-            tbodyB.innerHTML += row;
+            tbodyB.innerHTML += filaHtml;
         } else {
-            tbodyA.innerHTML += row;
+            tbodyA.innerHTML += filaHtml;
         }
     });
 }
 
+/**
+ * Función para marcar o desmarcar todos los checks a la vez
+ */
 function marcarBloque(estado) {
-    document.querySelectorAll('.asis-check').forEach(chk => chk.checked = estado);
+    document.querySelectorAll('.asis-check').forEach(chk => {
+        chk.checked = estado;
+    });
 }
 
-// Función para enviar la asistencia al Sheets
+/**
+ * Procesa la asistencia, calcula porcentajes y envía los datos al Sheets
+ */
 function enviarAsistencia() {
     const btn = document.getElementById('btnEnviar');
     const lider = document.getElementById('liderGp').value;
     const nombreGrupo = document.getElementById('nombreGrupo').value;
     const motivo = document.getElementById('motivo').value;
 
+    // Validación básica
     if (!lider || !nombreGrupo) {
-        alert("Complete el Líder y el Nombre del Grupo antes de guardar.");
+        alert("Por favor, seleccione el Líder y escriba el Nombre del Grupo.");
         return;
     }
 
     btn.disabled = true;
-    btn.innerText = "Registrando en Sheets...";
+    btn.innerText = "Registrando en Vertical...";
 
-    const fecha = new Date().toLocaleDateString();
+    const fechaEnvio = new Date().toLocaleDateString();
     const checks = document.querySelectorAll('.asis-check');
     
-    // Cálculo de porcentaje por tipo
-    let conteo = { "Bautizado": { tot: 0, asis: 0 }, "Amigos de Esperanza": { tot: 0, asis: 0 } };
-    listaIntegrantes.forEach(p => { if(conteo[p.Tipo]) conteo[p.Tipo].tot++; });
+    // 1. Contar totales del padrón para este líder para el %
+    let totalesPorTipo = { "Bautizado": 0, "Amigo de esperanza": 0 };
+    listaIntegrantes.forEach(p => {
+        let t = (p.Tipo === "Bautizado") ? "Bautizado" : "Amigo de esperanza";
+        totalesPorTipo[t]++;
+    });
 
-    let registros = [];
+    // 2. Contar quiénes marcaron asistencia
+    let asistieronPorTipo = { "Bautizado": 0, "Amigo de esperanza": 0 };
+    let registrosParaEnviar = [];
+
     checks.forEach(chk => {
-        const p = listaIntegrantes[chk.dataset.index];
         if (chk.checked) {
-            conteo[p.Tipo].asis++;
-            registros.push({
+            const idx = chk.dataset.index;
+            const p = listaIntegrantes[idx];
+            let t = (p.Tipo === "Bautizado") ? "Bautizado" : "Amigo de esperanza";
+            
+            asistieronPorTipo[t]++;
+            
+            // Crear objeto de fila para esta persona
+            registrosParaEnviar.push({
                 liderGp: lider,
-                fecha: fecha,
+                fecha: fechaEnvio,
                 nombreGrupo: nombreGrupo,
                 motivo: motivo,
                 nombre: p.Nombres,
                 sexo: p.Sexo,
-                tipo: p.Tipo
+                tipo: p.Tipo,
+                tipoClasificacion: t // Auxiliar para el %
             });
         }
     });
 
-    // Asignar porcentaje calculado a cada fila del registro
-    registros.forEach(reg => {
-        const c = conteo[reg.tipo];
-        reg.porcentajeAsis = c.tot > 0 ? ((c.asis / c.tot) * 100).toFixed(1) + "%" : "0%";
+    if (registrosParaEnviar.length === 0) {
+        alert("Debe marcar al menos a una persona.");
+        btn.disabled = false;
+        btn.innerText = "Guardar Asistencia";
+        return;
+    }
+
+    // 3. Asignar el porcentaje calculado a cada fila individual (Vertical)
+    registrosParaEnviar.forEach(reg => {
+        const total = totalesPorTipo[reg.tipoClasificacion];
+        const asis = asistieronPorTipo[reg.tipoClasificacion];
+        reg.porcentajeAsis = ((asis / total) * 100).toFixed(1) + "%";
+        // Nota: La columna S/.LES se gestiona en el Apps Script como columna vacía
     });
 
-    // Envío de datos mediante POST
+    // 4. Enviar mediante POST
     fetch(SCRIPT_URL, {
         method: "POST",
-        mode: "no-cors", 
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({ destino: "ASISTENCIA", registros: registros })
+        mode: "no-cors", // Requerido para evitar bloqueos de Google
+        headers: {
+            "Content-Type": "text/plain"
+        },
+        body: JSON.stringify({
+            destino: "ASISTENCIA",
+            registros: registrosParaEnviar
+        })
     })
     .then(() => {
-        alert("¡Asistencia registrada correctamente!");
-        location.reload(); // Recarga para limpiar el formulario
+        alert("¡Éxito! La asistencia se registró fila por fila en la hoja 'Asist'.");
+        location.reload(); // Limpiar formulario
     })
     .catch(err => {
-        console.error(err);
-        alert("Ocurrió un error al enviar. Verifique su conexión.");
+        console.error("Error al enviar:", err);
+        alert("Hubo un error al guardar. Intente nuevamente.");
         btn.disabled = false;
         btn.innerText = "Guardar Asistencia";
     });
