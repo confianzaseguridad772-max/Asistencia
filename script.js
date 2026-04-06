@@ -20,7 +20,6 @@ async function cargarLista() {
     const tbodyB = document.querySelector('#tablaBautizados tbody');
     const tbodyA = document.querySelector('#tablaAmigos tbody');
     
-    // Mensaje visual de carga
     tbodyB.innerHTML = "<tr><td colspan='2' class='empty-msg'>Buscando integrantes...</td></tr>";
     tbodyA.innerHTML = "<tr><td colspan='2' class='empty-msg'>Buscando integrantes...</td></tr>";
 
@@ -58,8 +57,6 @@ function renderizarTablas() {
                 </td>
             </tr>`;
         
-        // Clasificación según la columna "Tipo" del Excel
-        // Se usa una comparación flexible por si hay espacios o variaciones en el texto
         if (persona.Tipo && persona.Tipo.trim().toLowerCase().includes("bautizado")) {
             tbodyB.innerHTML += filaHtml;
         } else {
@@ -68,9 +65,6 @@ function renderizarTablas() {
     });
 }
 
-/**
- * Función para marcar o desmarcar todos los checks
- */
 function marcarBloque(estado) {
     document.querySelectorAll('.asis-check').forEach(chk => {
         chk.checked = estado;
@@ -78,7 +72,7 @@ function marcarBloque(estado) {
 }
 
 /**
- * Procesa la asistencia en VERTICAL, calcula porcentajes y envía los datos
+ * Procesa la asistencia y muestra los totales en la alerta de éxito
  */
 function enviarAsistencia() {
     const btn = document.getElementById('btnEnviar');
@@ -97,16 +91,15 @@ function enviarAsistencia() {
     const fechaEnvio = new Date().toLocaleDateString();
     const checks = document.querySelectorAll('.asis-check');
     
-    // 1. Calcular totales del padrón para sacar el % exacto por categoría
     let totalesPorTipo = { "Bautizado": 0, "Amigo de esperanza": 0 };
     listaIntegrantes.forEach(p => {
         let t = (p.Tipo && p.Tipo.trim().toLowerCase().includes("bautizado")) ? "Bautizado" : "Amigo de esperanza";
         totalesPorTipo[t]++;
     });
 
-    // 2. Filtrar solo los que asistieron y recolectar sus montos S/.LES
     let asistieronPorTipo = { "Bautizado": 0, "Amigo de esperanza": 0 };
     let registrosParaEnviar = [];
+    let sumaTotalSoles = 0;
 
     checks.forEach(chk => {
         if (chk.checked) {
@@ -116,9 +109,9 @@ function enviarAsistencia() {
             
             asistieronPorTipo[t]++;
             
-            // Capturar el monto S/.LES individual desde el input correspondiente
             const inputMonto = document.getElementById(`monto-${idx}`);
-            const montoIndividual = (inputMonto && inputMonto.value) ? inputMonto.value : "0.00";
+            const montoNum = (inputMonto && inputMonto.value) ? parseFloat(inputMonto.value) : 0;
+            sumaTotalSoles += montoNum;
             
             registrosParaEnviar.push({
                 liderGp: lider,
@@ -128,8 +121,8 @@ function enviarAsistencia() {
                 nombre: p.Nombres,
                 sexo: p.Sexo,
                 tipo: p.Tipo,
-                tipoRef: t, // Referencia interna para el cálculo de %
-                soles: "S/. " + montoIndividual
+                tipoRef: t,
+                soles: "S/. " + montoNum.toFixed(2)
             });
         }
     });
@@ -141,32 +134,39 @@ function enviarAsistencia() {
         return;
     }
 
-    // 3. Asignar el porcentaje correspondiente a cada fila (Vertical)
+    // Cálculo de porcentajes para el envío y para la alerta
+    let porcB = totalesPorTipo["Bautizado"] > 0 ? ((asistieronPorTipo["Bautizado"] / totalesPorTipo["Bautizado"]) * 100).toFixed(1) : "0";
+    let porcA = totalesPorTipo["Amigo de esperanza"] > 0 ? ((asistieronPorTipo["Amigo de esperanza"] / totalesPorTipo["Amigo de esperanza"]) * 100).toFixed(1) : "0";
+
     registrosParaEnviar.forEach(reg => {
-        const total = totalesPorTipo[reg.tipoRef];
-        const asis = asistieronPorTipo[reg.tipoRef];
-        reg.porcentajeAsis = total > 0 ? ((asis / total) * 100).toFixed(1) + "%" : "0%";
+        reg.porcentajeAsis = reg.tipoRef === "Bautizado" ? porcB + "%" : porcA + "%";
     });
 
-    // 4. Envío de datos al Google Sheets mediante POST
     fetch(SCRIPT_URL, {
         method: "POST",
         mode: "no-cors", 
-        headers: {
-            "Content-Type": "text/plain"
-        },
+        headers: { "Content-Type": "text/plain" },
         body: JSON.stringify({
             destino: "ASISTENCIA",
             registros: registrosParaEnviar
         })
     })
     .then(() => {
-        alert("¡Éxito! Los datos se registraron correctamente en la hoja 'Asist'.");
+        // Alerta personalizada con el resumen solicitado
+        const mensajeExito = `¡Éxito! Los datos se registraron correctamente.
+--------------------------------------------
+Resumen de Asistencia:
+• Bautizados: ${asistieronPorTipo["Bautizado"]} de ${totalesPorTipo["Bautizado"]} (${porcB}%)
+• Amigos: ${asistieronPorTipo["Amigo de esperanza"]} de ${totalesPorTipo["Amigo de esperanza"]} (${porcA}%)
+--------------------------------------------
+TOTAL RECAUDADO: S/. ${sumaTotalSoles.toFixed(2)}`;
+
+        alert(mensajeExito);
         location.reload(); 
     })
     .catch(err => {
         console.error("Error al enviar:", err);
-        alert("Hubo un error al guardar. Verifique su conexión.");
+        alert("Hubo un error al guardar.");
         btn.disabled = false;
         btn.innerText = "Guardar Asistencia";
     });
