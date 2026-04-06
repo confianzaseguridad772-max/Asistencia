@@ -1,26 +1,173 @@
 :root {
   --primary: #1a73e8;
-  --bg: #f8f9fa;
-  --text: #202124;
+  --primary-dark: #1557b0;
+  --bg: #f1f3f4;
+  --white: #ffffff;
+  --text: #3c4043;
+  --border: #dadce0;
 }
 
-body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 15px; color: var(--text); }
-.container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-h2 { text-align: center; color: var(--primary); margin: 10px 0; }
-#fechaActual { text-align: center; font-size: 0.9rem; color: #666; margin-bottom: 20px; }
+body {
+  font-family: 'Roboto', sans-serif;
+  background-color: var(--bg);
+  margin: 0;
+  padding: 10px;
+  color: var(--text);
+}
 
-.form-group { margin-bottom: 15px; }
-label { display: block; font-weight: bold; margin-bottom: 5px; }
-input, select { width: 100%; padding: 12px; border: 1px solid #dadce0; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
+.container {
+  max-width: 650px;
+  margin: 0 auto;
+  background: var(--white);
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
 
-.bulk-actions { display: flex; gap: 10px; margin: 20px 0; }
-.btn { border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; transition: 0.2s; }
-.btn-secondary { background: #e8f0fe; color: var(--primary); }
-.btn-primary { background: var(--primary); color: white; margin-top: 20px; }
-.main-btn { width: 100%; font-size: 1.1rem; }
-.btn:disabled { background: #ccc; cursor: not-allowed; }
+header h2 {
+  text-align: center;
+  color: var(--primary);
+  margin: 0;
+}
 
-.section-title { background: #f1f3f4; padding: 10px; border-radius: 6px; font-size: 1rem; margin-top: 20px; border-left: 4px solid var(--primary); }
-table { width: 100%; border-collapse: collapse; margin-top: 5px; }
-td { padding: 12px; border-bottom: 1px solid #f1f3f4; }
-input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
+#fechaActual {
+  text-align: center;
+  font-size: 0.9rem;
+  color: #70757a;
+  margin-bottom: 20px;
+}
+
+.card {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid var(--border);
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 5px;
+  font-size: 0.9rem;
+}
+
+input[type="text"], 
+select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-sizing: border-box;
+  font-size: 1rem;
+}
+
+.bulk-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.btn {
+  border: none;
+  padding: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.3s;
+}
+
+.btn-secondary {
+  background-color: #e8f0fe;
+  color: var(--primary);
+  flex: 1;
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  color: white;
+  width: 100%;
+  font-size: 1.1rem;
+  margin-top: 25px;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-dark);
+}
+
+.btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.section-title {
+  font-size: 1.1rem;
+  padding: 8px 0;
+  border-bottom: 2px solid var(--primary);
+  margin-top: 25px;
+  color: var(--primary);
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  text-align: left;
+  font-size: 0.8rem;
+  color: #70757a;
+  padding: 10px 5px;
+  border-bottom: 1px solid var(--border);
+}
+
+td {
+  padding: 12px 5px;
+  border-bottom: 1px solid #f1f3f4;
+  vertical-align: middle;
+}
+
+.empty-msg {
+  text-align: center;
+  color: #999;
+  font-style: italic;
+  padding: 20px;
+}
+
+/* --- ESTILOS PARA S/.LES Y CHECKBOX --- */
+
+.cuota-input {
+  width: 60px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  text-align: center;
+  margin-right: 8px;
+}
+
+.asis-check {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+/* Alineación de la columna de acción */
+td:last-child {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+@media (max-width: 480px) {
+  .container { padding: 15px; }
+  .btn { padding: 10px; font-size: 0.9rem; }
+}
