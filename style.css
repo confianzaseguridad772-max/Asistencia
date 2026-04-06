@@ -1,59 +1,26 @@
 :root {
-  --primary: #2c3e50;
-  --accent: #27ae60;
-  --bg: #f4f7f6;
+  --primary: #1a73e8;
+  --bg: #f8f9fa;
+  --text: #202124;
 }
 
-body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: var(--bg);
-  padding: 20px;
-}
-
-.container {
-  max-width: 700px;
-  margin: auto;
-  background: white;
-  padding: 25px;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-}
+body { font-family: 'Roboto', sans-serif; background: var(--bg); margin: 0; padding: 15px; color: var(--text); }
+.container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+h2 { text-align: center; color: var(--primary); margin-bottom: 5px; }
+#fechaActual { text-align: center; font-size: 0.9rem; color: #666; margin-bottom: 20px; }
 
 .form-group { margin-bottom: 15px; }
+label { display: block; font-weight: 500; margin-bottom: 5px; }
+input, select { width: 100%; padding: 10px; border: 1px solid #dadce0; border-radius: 8px; box-sizing: border-box; }
 
-label { display: block; font-weight: bold; margin-bottom: 5px; color: var(--primary); }
+.bulk-actions { display: flex; gap: 10px; margin: 20px 0; }
+.btn { border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; transition: 0.2s; }
+.btn-secondary { background: #e8f0fe; color: var(--primary); }
+.btn-primary { background: var(--primary); color: white; margin-top: 20px; }
+.main-btn { width: 100%; font-size: 1.1rem; }
+.btn:disabled { background: #ccc; cursor: not-allowed; }
 
-input, select {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  box-sizing: border-box;
-}
-
-.actions { margin: 20px 0; display: flex; gap: 10px; }
-
-.btn {
-  padding: 12px 20px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: 0.3s;
-}
-
-.btn-primary { background: var(--primary); color: white; }
-.btn-accent { background: var(--accent); color: white; width: 100%; font-size: 1.1rem; }
-
-table { width: 100%; border-collapse: collapse; margin-top: 10px; background: #fff; }
-
-th, td { border: 1px solid #eee; padding: 12px; text-align: left; }
-
-th { background: #f8f9fa; color: var(--primary); }
-
-.section-title {
-  margin-top: 25px;
-  color: var(--primary);
-  border-left: 5px solid var(--accent);
-  padding-left: 10px;
-}
+.section-title { background: #f1f3f4; padding: 8px 12px; border-radius: 4px; font-size: 1rem; margin-top: 20px; }
+table { width: 100%; border-collapse: collapse; }
+td, th { padding: 12px; border-bottom: 1px solid #f1f3f4; text-align: left; }
+input[type="checkbox"] { transform: scale(1.5); }
