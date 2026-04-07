@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GP SERVIR 2026 | Gestión</title>
+  <title>GP SERVIR 2026 | Gestión de Asistencia</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
@@ -13,7 +13,7 @@
       <header class="main-header">
         <div class="logo-area">
           <h1>📊 Gestión de GP</h1>
-          <p>Registro de Asistencia y Cursos</p>
+          <p>Registro de Asistencia y Lecciones</p>
         </div>
         <div id="fechaActual" class="date-badge"></div>
       </header>
@@ -22,19 +22,20 @@
         <div class="input-grid">
           <div class="form-group">
             <label>👤 Líder de GP</label>
-<select id="liderGp" onchange="cargarLista()">
-  <option value="">Seleccione Líder...</option>
-  <option value="1-Cherry">1-Cherry</option>
-  <option value="2-Tito">2-Tito</option>
-  <option value="3-Ricardo">3-Ricardo</option>
-  <option value="4-Pedro">4-Pedro</option>
-  <option value="5-Erika">5-Erika</option>
-  <option value="6-Jafet">6-Jafet</option>
-  <option value="7-Gustabo">7-Gustabo</option> </select>
+            <select id="liderGp" onchange="cargarLista()">
+              <option value="">Seleccione Líder...</option>
+              <option value="1-Cherry / Avril">1-Cherry / Avril</option>
+              <option value="2-Tito / Zuliel">2-Tito / Zuliel</option>
+              <option value="3-Ricardo / Rosario">3-Ricardo / Rosario</option>
+              <option value="4-Pedro / Rolando">4-Pedro / Rolando</option>
+              <option value="5-Erika / Valeria">5-Erika / Valeria</option>
+              <option value="6-Jafet">6-Jafet</option>
+              <option value="7.Gustabo/Jenny">7.Gustabo/Jenny</option>
+            </select>
           </div>
           <div class="form-group">
             <label>🏠 Nombre del Grupo</label>
-            <input type="text" id="nombreGrupo" placeholder="Ej. Centinelas">
+            <input type="text" id="nombreGrupo" placeholder="Ej. Vencedores">
           </div>
           <div class="form-group">
             <label>📅 Motivo</label>
@@ -42,7 +43,6 @@
               <option>Reunión Semanal</option>
               <option>Parejas Discipuladoras</option>
               <option>Actividad Social</option>
-              <option>Escuela Sabática</option>
             </select>
           </div>
         </div>
@@ -73,7 +73,7 @@
         <div class="scroll-area">
           <table id="tablaBautizados">
             <thead>
-              <tr><th>Nombre</th><th style="text-align:right">Lec. / Asist.</th></tr>
+              <tr><th>Nombre</th><th style="text-align:right">N° Lec | Asist</th></tr>
             </thead>
             <tbody></tbody>
           </table>
@@ -81,11 +81,11 @@
       </section>
 
       <section class="table-section">
-        <h3 class="table-title amigos">🌱 Amigos (Curso Bíblico)</h3>
+        <h3 class="table-title amigos">🌱 Amigos de esperanza</h3>
         <div class="scroll-area">
           <table id="tablaAmigos">
             <thead>
-              <tr><th>Nombre</th><th style="text-align:right">Lec. / Asist.</th></tr>
+              <tr><th>Nombre del Amigo</th><th style="text-align:right">N° Lec | Asist</th></tr>
             </thead>
             <tbody></tbody>
           </table>
@@ -98,8 +98,8 @@
 
   <div id="modalResumen" class="modal-overlay">
     <div class="modal-content">
-      <h2>¡Éxito!</h2>
-      <p>Datos enviados correctamente a <b>Asist</b> y <b>Amigos</b>.</p>
+      <h2>¡Registro Exitoso!</h2>
+      <p>La información ha sido migrada a <b>Asist</b> y <b>Amigos</b> correctamente.</p>
       <button class="btn-modal-close" onclick="location.reload()">Aceptar</button>
     </div>
   </div>
