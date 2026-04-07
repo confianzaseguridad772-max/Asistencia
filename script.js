@@ -1,5 +1,5 @@
 // REEMPLAZA ESTA URL por la de tu Implementación de Google Apps Script
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxp4NqfQtutqNT0n5xUT3mMCOyANlAeFhxkAgZnIM2nvlapi6zwbuSMRWYGHCsmjhE-qQ/exec"; 
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxR5m5G-wXFv6evrrQex_SjwBGYxZtIxleck6UI-Xsi4Jeqdj6iXFutwoUjM5YxaFN1UA/exec"; 
 let integrantes = [];
 
 // Mostrar fecha actual en el badge
