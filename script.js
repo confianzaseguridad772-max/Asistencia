@@ -1,4 +1,4 @@
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyE3nkfQK2DYcVEtqkEN1dPc8VPFKQmfmwhdHWQUCb4pf6ug7RB6H_ATqtl3fZPsHzA8A/exec"; 
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwZMNrE7RzCnE2WXAOOwbAu1uz7AlD_oC5n2cc8Vq0kpwvBV2dihnRG-etgUEOU4VTX-A/exec"; 
 let integrantes = [];
 
 document.getElementById('fechaActual').innerText = new Date().toLocaleDateString();
