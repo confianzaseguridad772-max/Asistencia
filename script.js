@@ -1,6 +1,6 @@
 // Variables globales
 let integrantes = [];
-const urlApp = "https://script.google.com/macros/s/AKfycbw2hm1v8x2KwvEOw6BZgN3Rz0NmQz1ozOICM_Eld1VdXVjLpf5wbka6d6obI0ZRxfVZ5Q/exec"; // Reemplaza con tu URL real
+const urlApp = "https://script.google.com/macros/s/AKfycbxUSWcb1SJ0HjQRJJYr54eysInBCg1BRv-Xyf55GdIcVhvrVctsp27_IbzP2hDRpA-0eQ/exec"; // Reemplaza con tu URL real
 
 // 1. CONFIGURACIÓN INICIAL
 window.onload = function() {
