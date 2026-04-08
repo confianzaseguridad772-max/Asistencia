@@ -1,6 +1,6 @@
 // Variables globales
 let integrantes = [];
-const urlApp = "https://script.google.com/macros/s/AKfycbzohv07LL1Bnqv3tnQ5ZDqDesy_2PnPktORD3wn-uF1VEF-Wwf14y2QMo8LS272AU0GuQ/exec"; // REEMPLAZA CON TU URL REAL
+const urlApp = "https://script.google.com/macros/s/AKfycbz5xqHgOBTf6E_1Yswow2i9BAcRGc_gJo8x4TbmOmn2xwCfEi7KKsRhYRmruCi7SWm09A/exec"; // Reemplaza con tu URL de implementación real
 
 // 1. CONFIGURACIÓN INICIAL AL CARGAR LA PÁGINA
 window.onload = function() {
@@ -11,7 +11,7 @@ window.onload = function() {
     // Ajustar fecha para el input (YYYY-MM-DD) evitando desfase de zona horaria
     const offset = hoy.getTimezoneOffset();
     const fechaLocal = new Date(hoy.getTime() - (offset * 60 * 1000));
-    fechaInput.value = fechaLocal.toISOString().split('T')[0];
+    if(fechaInput) fechaInput.value = fechaLocal.toISOString().split('T')[0];
     
     // Mostrar fecha en el badge superior (DD/MM/YYYY)
     if(fechaDisplay) fechaDisplay.innerText = hoy.toLocaleDateString('es-PE');
@@ -20,6 +20,8 @@ window.onload = function() {
     const motivoSelect = document.getElementById('motivoReunion');
     if(motivoSelect) {
         motivoSelect.addEventListener('change', gestionarVisibilidad);
+        // Ejecutar una vez al cargar por si ya hay un valor por defecto
+        gestionarVisibilidad();
     }
 };
 
@@ -29,7 +31,7 @@ async function buscarPorLider() {
     if (!lider) return;
 
     const loading = document.getElementById('loading');
-    loading.style.display = 'block';
+    if(loading) loading.style.display = 'block';
 
     try {
         const resp = await fetch(`${urlApp}?lider=${encodeURIComponent(lider)}`);
@@ -45,27 +47,28 @@ async function buscarPorLider() {
         console.error("Error al obtener datos:", err);
         alert("Error al conectar con el servidor.");
     } finally {
-        loading.style.display = 'none';
+        if(loading) loading.style.display = 'none';
     }
 }
 
-// 3. FUNCIÓN: CONTROL DE VISIBILIDAD DE MÓDULOS (SEGÚN TU REQUERIMIENTO)
+// 3. FUNCIÓN: CONTROL DE VISIBILIDAD DE MÓDULOS
 function gestionarVisibilidad() {
     const motivo = document.getElementById('motivoReunion').value;
     const secBautizados = document.getElementById('seccionBautizados');
     const secAmigos = document.getElementById('seccionAmigos');
 
-    // Si no se han cargado integrantes aún, no hacemos nada
     if (!secBautizados || !secAmigos) return;
+
+    console.log("Cambiando visibilidad para:", motivo);
 
     if (motivo === "GP:Estudios biblicos") {
         // Solo visualiza el modulo "Amigos de esperanza"
-        secBautizados.style.display = 'none';
-        secAmigos.style.display = 'block';
+        secBautizados.setAttribute('style', 'display: none !important');
+        secAmigos.setAttribute('style', 'display: block !important');
     } else {
         // GP:Hogares o GP:Unidades de Acción (Visualiza ambos)
-        secBautizados.style.display = 'block';
-        secAmigos.style.display = 'block';
+        secBautizados.setAttribute('style', 'display: block !important');
+        secAmigos.setAttribute('style', 'display: block !important');
     }
 }
 
@@ -114,13 +117,13 @@ function renderizarTablas() {
     });
 }
 
-// 5. FUNCIÓN PARA ENVIAR ASISTENCIA
+// 5. FUNCIÓN PARA ENVIAR ASISTENCIA (MIGRACIÓN DINÁMICA)
 async function enviarAsistencia() {
     const checks = document.querySelectorAll('.check-asis:checked');
     if (checks.length === 0) return alert("Por favor, seleccione al menos a una persona.");
 
     const btn = document.getElementById('btnEnviar');
-    const registrosAmigos = [];
+    const todosLosRegistros = [];
     
     const fechaSeleccionada = document.getElementById('fechaManual').value;
     const motivo = document.getElementById('motivoReunion').value;
@@ -135,13 +138,15 @@ async function enviarAsistencia() {
         const idx = check.getAttribute('data-idx');
         const persona = integrantes[idx];
         const numLeccion = document.getElementById(`lec-${idx}`).value || "1";
+        const tipoPersona = (persona.Tipo || persona.TIPO || "");
 
-        registrosAmigos.push({
+        todosLosRegistros.push({
             nombre: (persona.Nombres || persona.NOMBRES),
             leccionNum: numLeccion,
             fecha: fechaSeleccionada,
             lider: liderSeleccionado,
-            grupo: nombreGrupo
+            grupo: nombreGrupo,
+            tipo: tipoPersona
         });
     });
 
@@ -156,7 +161,7 @@ async function enviarAsistencia() {
             ofr: totalOfrendas,
             nB: numBautismo
         },
-        registrosAmigos: registrosAmigos
+        registros: todosLosRegistros // El servidor filtrará por motivo para Amigos/Hogares/Unidad
     };
 
     try {
