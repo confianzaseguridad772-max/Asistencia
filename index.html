@@ -24,13 +24,13 @@
             <label>👤 Seleccionar Líder de GP</label>
             <select id="selectLider" onchange="buscarPorLider()">
               <option value="">Seleccione...</option>
-              <option value="1-Cherry">1-Cherry</option>
-              <option value="2-Tito">2-Tito</option>
-              <option value="3-Ricardo">3-Ricardo</option>
-              <option value="4-Pedro">4-Pedro</option>
-              <option value="5-Erika">5-Erika</option>
+              <option value="1-Cherry / Avril">1-Cherry / Avril</option>
+              <option value="2-Tito / Zuliel">2-Tito / Zuliel</option>
+              <option value="3-Ricardo / Rosario">3-Ricardo / Rosario</option>
+              <option value="4-Pedro / Rolando">4-Pedro / Rolando</option>
+              <option value="5-Erika / Valeria">5-Erika / Valeria</option>
               <option value="6-Jafet">6-Jafet</option>
-              <option value="7-Gustabo">7-Gustabo</option>
+              <option value="7.Gustabo/Jenny">7.Gustabo/Jenny</option>
             </select>
           </div>
           <div class="form-group">
@@ -79,7 +79,7 @@
         <button class="btn-action none" onclick="marcarBloque(false)">❌ Desmarcar</button>
       </div>
 
-      <section class="table-section">
+      <section class="table-section" id="seccionBautizados">
         <h3 class="table-title bautizados">⭐ Miembros Bautizados</h3>
         <div class="scroll-area">
           <table id="tablaBautizados">
@@ -95,7 +95,7 @@
         </div>
       </section>
 
-      <section class="table-section">
+      <section class="table-section" id="seccionAmigos">
         <h3 class="table-title amigos">🌱 Amigos de esperanza</h3>
         <div class="scroll-area">
           <table id="tablaAmigos">
@@ -115,32 +115,17 @@
     </div>
   </div>
 
-  <div id="modalResumen" class="modal-overlay">
+  <div id="modalResumen" class="modal-overlay" style="display: none;">
     <div class="modal-content">
       <div style="font-size: 50px;">✅</div>
       <h2>¡Registro Exitoso!</h2>
-      <p>La asistencia se guardó correctamente y los datos de lecciones fueron migrados.</p>
+      <p>La asistencia se guardó y las lecciones fueron migradas al sistema correspondiente.</p>
       <button class="btn-modal-close" onclick="location.reload()">Aceptar y Refrescar</button>
     </div>
   </div>
 
   <script src="script.js"></script>
   <script>
-    // Configuración inicial de fechas
-    window.onload = function() {
-        const fechaInput = document.getElementById('fechaManual');
-        const fechaDisplay = document.getElementById('fechaDisplay');
-        const hoy = new Date();
-        
-        // Formato para el input date (YYYY-MM-DD)
-        const offset = hoy.getTimezoneOffset();
-        const fechaLocal = new Date(hoy.getTime() - (offset * 60 * 1000));
-        fechaInput.value = fechaLocal.toISOString().split('T')[0];
-        
-        // Formato para mostrar arriba (DD/MM/YYYY)
-        fechaDisplay.innerText = hoy.toLocaleDateString('es-PE');
-    };
-
     function marcarBloque(valor) {
       const checkboxes = document.querySelectorAll('.check-asis');
       checkboxes.forEach(cb => cb.checked = valor);
