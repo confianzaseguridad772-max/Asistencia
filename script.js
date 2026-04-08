@@ -1,6 +1,6 @@
 // Variables globales
 let integrantes = [];
-const urlApp = "https://script.google.com/macros/s/AKfycbyAlStJHeg0X1V61D0E-AzI6N1QP_Iz5aFwoJwClEubx0gdo4ZyLmgeHBWQgWXo1MtSjw/exec"; // Reemplaza con tu URL real
+const urlApp = "https://script.google.com/macros/s/AKfycbyCDtCMmAeR1AWYwY5dNf8Q6cvVt7OF9hfmj9HUbPZ4PwPmCbsdzlrzEi7tH5mV6IaKWg/exec"; // Reemplaza con tu URL real
 
 // 1. CONFIGURACIÓN INICIAL
 window.onload = function() {
@@ -8,19 +8,19 @@ window.onload = function() {
     const fechaDisplay = document.getElementById('fechaDisplay');
     const hoy = new Date();
     
-    // Ajuste de fecha local para el input
+    // Ajuste de fecha local para el input YYYY-MM-DD
     const offset = hoy.getTimezoneOffset();
     const fechaLocal = new Date(hoy.getTime() - (offset * 60 * 1000));
     if(fechaInput) fechaInput.value = fechaLocal.toISOString().split('T')[0];
     
-    // Mostrar fecha en formato legible
+    // Mostrar fecha en formato legible DD/MM/YYYY
     if(fechaDisplay) fechaDisplay.innerText = hoy.toLocaleDateString('es-PE');
 
-    // Escuchar cambios en el motivo para ajustar la interfaz
+    // Escuchar cambios en el motivo para ajustar la interfaz en tiempo real
     const motivoSelect = document.getElementById('motivoReunion');
     if(motivoSelect) {
         motivoSelect.addEventListener('change', gestionarVisibilidad);
-        gestionarVisibilidad(); // Ejecución inicial
+        gestionarVisibilidad(); 
     }
 };
 
@@ -37,7 +37,7 @@ async function buscarPorLider() {
         integrantes = await resp.json();
         
         renderizarTablas();
-        gestionarVisibilidad(); // Asegura visibilidad tras cargar datos
+        gestionarVisibilidad(); 
         
     } catch (err) {
         console.error("Error:", err);
@@ -47,7 +47,7 @@ async function buscarPorLider() {
     }
 }
 
-// 3. CONTROL DINÁMICO DE INTERFAZ (ACTUALIZADO)
+// 3. CONTROL DINÁMICO DE INTERFAZ (Observación 2 integrada)
 function gestionarVisibilidad() {
     const motivo = document.getElementById('motivoReunion').value;
     const secBautizados = document.getElementById('seccionBautizados');
@@ -57,26 +57,26 @@ function gestionarVisibilidad() {
     if (!secBautizados || !secAmigos) return;
 
     if (motivo === "GP:Estudios biblicos") {
-        // Solo Amigos + Lección obligatoria
+        // REGLA: En Estudios Bíblicos NO se pide información de Bautizados
         secBautizados.setAttribute('style', 'display: none !important');
         secAmigos.setAttribute('style', 'display: block !important');
         inputsLeccion.forEach(input => input.style.display = 'block');
     } 
     else if (motivo === "GP:Hogares") {
-        // Ambos módulos + Ocultar inputs de lección (Solo asistencia SI/NO)
+        // Mostrar ambos módulos pero OCULTAR el número de lección (Solo asistencia SI/NO)
         secBautizados.setAttribute('style', 'display: block !important');
         secAmigos.setAttribute('style', 'display: block !important');
         inputsLeccion.forEach(input => input.style.display = 'none');
     }
     else if (motivo === "GP:Unidad de Acción") {
-        // Ambos módulos + Mostrar inputs de lección (Para migrar número)
+        // Mostrar ambos módulos y permitir ingreso de número de lección
         secBautizados.setAttribute('style', 'display: block !important');
         secAmigos.setAttribute('style', 'display: block !important');
         inputsLeccion.forEach(input => input.style.display = 'block');
     }
 }
 
-// 4. DIBUJAR TABLAS
+// 4. RENDERIZADO DE TABLAS
 function renderizarTablas() {
     const tbB = document.querySelector('#tablaBautizados tbody');
     const tbA = document.querySelector('#tablaAmigos tbody');
@@ -111,7 +111,7 @@ function renderizarTablas() {
     });
 }
 
-// 5. ENVÍO DE ASISTENCIA CON VALIDACIONES (ACTUALIZADO)
+// 5. ENVÍO DE ASISTENCIA CON FILTROS (Observación 1 y 2 integradas)
 async function enviarAsistencia() {
     const checks = document.querySelectorAll('.check-asis:checked');
     if (checks.length === 0) return alert("Seleccione al menos una persona.");
@@ -124,28 +124,37 @@ async function enviarAsistencia() {
     const liderVal = document.getElementById('selectLider').value;
     const grupoVal = document.getElementById('nombreGrupo').value;
 
-    // Validación de lecciones según motivo
     for (let check of checks) {
         const idx = check.getAttribute('data-idx');
         const persona = integrantes[idx];
+        const tipoPersona = (persona.Tipo || persona.TIPO || "").toString().toLowerCase();
         const inputLec = document.getElementById(`lec-${idx}`);
         const numLec = inputLec.value;
 
-        // REGLA: En Estudios Bíblicos la lección es OBLIGATORIA
+        // OBSERVACIÓN: Si es Estudios Bíblicos, ignorar a los Bautizados aunque estén marcados
+        if (motivo === "GP:Estudios biblicos" && tipoPersona.includes("bautizado")) {
+            continue; 
+        }
+
+        // VALIDACIÓN: En Estudios Bíblicos la lección para Amigos es obligatoria
         if (motivo === "GP:Estudios biblicos" && !numLec) {
-            alert(`Falta número de lección para: ${persona.Nombres || persona.NOMBRES}`);
+            alert(`Por favor, ingrese el número de lección para el amigo: ${persona.Nombres || persona.NOMBRES}`);
             inputLec.focus();
             return;
         }
 
         todosLosRegistros.push({
             nombre: (persona.Nombres || persona.NOMBRES),
-            leccionNum: numLec || "1", // Por defecto 1 si está oculto (Hogares)
+            leccionNum: numLec || "1", // Valor por defecto si no es visible
             fecha: fechaVal,
             lider: liderVal,
             grupo: grupoVal,
             tipo: (persona.Tipo || persona.TIPO || "")
         });
+    }
+
+    if (todosLosRegistros.length === 0 && motivo === "GP:Estudios biblicos") {
+        return alert("Para Estudios Bíblicos debe registrar al menos un Amigo de Esperanza.");
     }
 
     const payload = {
@@ -165,10 +174,14 @@ async function enviarAsistencia() {
     try {
         btn.disabled = true;
         btn.innerText = "🚀 Guardando...";
+        
+        // El envío se hace a la URL del Apps Script que ahora maneja la migración a Amigos/Hogares/Unidad
         await fetch(urlApp, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+        
         document.getElementById('modalResumen').style.display = 'flex';
+        
     } catch (err) {
-        alert("Error al enviar reporte.");
+        alert("Error al enviar el reporte.");
         btn.disabled = false;
         btn.innerText = "Guardar Reporte General";
     }
