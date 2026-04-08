@@ -44,7 +44,7 @@ async function buscarPorLider() {
     }
 }
 
-// 3. VISIBILIDAD
+// 3. CONTROL DINÁMICO DE INTERFAZ
 function gestionarVisibilidad() {
     const motivo = document.getElementById('motivoReunion').value;
     const secBautizados = document.getElementById('seccionBautizados');
@@ -63,25 +63,27 @@ function gestionarVisibilidad() {
         secAmigos.style.display = 'block';
         inputsLeccion.forEach(input => input.style.display = 'none');
     }
-    else {
+    else if (motivo === "GP:Unidad de Acción") {
         secBautizados.style.display = 'block';
         secAmigos.style.display = 'block';
         inputsLeccion.forEach(input => input.style.display = 'block');
     }
 }
 
-// 4. RENDER
+// 4. RENDERIZADO DE TABLAS
 function renderizarTablas() {
     const tbB = document.querySelector('#tablaBautizados tbody');
     const tbA = document.querySelector('#tablaAmigos tbody');
     
+    if (!tbB || !tbA) return;
+
     tbB.innerHTML = ''; 
     tbA.innerHTML = '';
 
     integrantes.forEach((p, i) => {
-        const nombre = p.Nombres || "Sin Nombre";
-        const dni = p.DNI || "";
-        const tipo = (p.Tipo || "").toLowerCase();
+        const nombre = p.Nombres || p.NOMBRES || "Sin Nombre";
+        const dni = p.DNI || p.dni || "";
+        const tipo = (p.Tipo || p.TIPO || "").toString().toLowerCase();
 
         const rowHtml = `
             <tr>
@@ -89,8 +91,10 @@ function renderizarTablas() {
                     <div style="font-weight:600;">${nombre}</div>
                 </td>
                 <td align="right">
-                    <input type="number" id="lec-${i}" class="lec-input" style="width:50px;">
-                    <input type="checkbox" class="check-asis" data-idx="${i}">
+                    <div style="display:flex; gap:8px; justify-content:flex-end;">
+                        <input type="number" id="lec-${i}" class="lec-input" placeholder="N°" min="1" style="width:50px;">
+                        <input type="checkbox" class="check-asis" data-idx="${i}" style="width:20px; height:20px;">
+                    </div>
                 </td>
             </tr>`;
         
@@ -99,7 +103,13 @@ function renderizarTablas() {
     });
 }
 
-// 5. ENVÍO
+// 5. MARCAR TODOS
+function marcarBloque(valor) {
+    const checkboxes = document.querySelectorAll('.check-asis');
+    checkboxes.forEach(cb => cb.checked = valor);
+}
+
+// 6. ENVÍO DE ASISTENCIA (FIX CELULAR + VALIDACIONES)
 async function enviarAsistencia() {
     const checks = document.querySelectorAll('.check-asis:checked');
     if (checks.length === 0) return alert("Seleccione al menos una persona.");
@@ -121,10 +131,19 @@ async function enviarAsistencia() {
         const idx = check.getAttribute('data-idx');
         const persona = integrantes[idx];
 
+        const inputLec = document.getElementById(`lec-${idx}`);
+        const numLec = inputLec.value;
+
+        if (motivo === "GP:Estudios biblicos" && !numLec) {
+            alert(`Ingrese lección para: ${persona.Nombres}`);
+            inputLec.focus();
+            return;
+        }
+
         registros.push({
-            dni: persona.DNI, // 🔥 FIX CLAVE
-            nombre: persona.Nombres,
-            leccionNum: document.getElementById(`lec-${idx}`).value || "1"
+            dni: persona.DNI || persona.dni || "",
+            nombre: persona.Nombres || persona.NOMBRES,
+            leccionNum: numLec || "1"
         });
     }
 
@@ -142,18 +161,19 @@ async function enviarAsistencia() {
     try {
         btn.disabled = true;
         btn.innerText = "🚀 Guardando...";
-        
+
+        // 🔥 FIX CELULAR
         await fetch(urlApp, {
             method: 'POST',
-            headers: { "Content-Type": "application/json" },
+            mode: 'no-cors',
             body: JSON.stringify(payload)
         });
 
-        btn.innerText = "✅ Guardado";
-        btn.style.background = "#1e8e3e";
-        
+        // ✅ ASUMIMOS ÉXITO
+        document.getElementById('modalResumen').style.display = 'flex';
+
     } catch (err) {
-        alert("Error al enviar el reporte.");
+        alert("Error de conexión. Intente nuevamente.");
         btn.disabled = false;
         btn.innerText = "Guardar Reporte General";
     }
