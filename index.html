@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gestión GP - Asistencia y Dones</title>
+  <title>Gestión GP - Vencedores</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
@@ -15,7 +15,7 @@
           <h1>📊 Gestión de GP</h1>
           <p>Asistencia, Lecciones y Dones</p>
         </div>
-        <div id="fechaActual" class="date-badge"></div>
+        <div id="fechaDisplay" class="date-badge"></div>
       </header>
       
       <section class="config-card">
@@ -35,11 +35,26 @@
           </div>
           <div class="form-group">
             <label>🏠 Nombre del Grupo</label>
-            <input type="text" id="nombreGrupo" value="Vencedores" placeholder="Ej. Vencedores">
+            <input type="text" id="nombreGrupo" value="Vencedores">
           </div>
         </div>
 
-        <div id="loading" style="display: none; text-align: center; color: var(--primary); font-weight: bold; margin: 10px 0;">
+        <div class="input-grid">
+          <div class="form-group">
+            <label>📝 Motivo de reunión</label>
+            <select id="motivoReunion">
+              <option value="GP:Hogares">GP:Hogares</option>
+              <option value="GP:Unidad de Acción">GP:Unidad de Acción</option>
+              <option value="GP:Estudios biblicos">GP:Estudios biblicos</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>📅 Fecha de Registro</label>
+            <input type="date" id="fechaManual">
+          </div>
+        </div>
+
+        <div id="loading" style="display: none; text-align: center; color: #1a73e8; font-weight: bold; margin: 10px 0;">
           ⏳ Consultando Padrón y Dones...
         </div>
 
@@ -104,17 +119,28 @@
     <div class="modal-content">
       <div style="font-size: 50px;">✅</div>
       <h2>¡Registro Exitoso!</h2>
-      <p>La asistencia y las lecciones han sido guardadas. Los datos de amigos se migraron correctamente.</p>
+      <p>La asistencia se guardó correctamente y los datos de lecciones fueron migrados.</p>
       <button class="btn-modal-close" onclick="location.reload()">Aceptar y Refrescar</button>
     </div>
   </div>
 
   <script src="script.js"></script>
   <script>
-    // Mostrar la fecha actual al cargar
-    document.getElementById('fechaActual').innerText = new Date().toLocaleDateString('es-PE');
-    
-    // Función auxiliar para los botones de marcar todos
+    // Configuración inicial de fechas
+    window.onload = function() {
+        const fechaInput = document.getElementById('fechaManual');
+        const fechaDisplay = document.getElementById('fechaDisplay');
+        const hoy = new Date();
+        
+        // Formato para el input date (YYYY-MM-DD)
+        const offset = hoy.getTimezoneOffset();
+        const fechaLocal = new Date(hoy.getTime() - (offset * 60 * 1000));
+        fechaInput.value = fechaLocal.toISOString().split('T')[0];
+        
+        // Formato para mostrar arriba (DD/MM/YYYY)
+        fechaDisplay.innerText = hoy.toLocaleDateString('es-PE');
+    };
+
     function marcarBloque(valor) {
       const checkboxes = document.querySelectorAll('.check-asis');
       checkboxes.forEach(cb => cb.checked = valor);
