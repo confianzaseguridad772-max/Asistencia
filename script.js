@@ -1,6 +1,6 @@
 // Variables globales
 let integrantes = [];
-const urlApp = "https://script.google.com/macros/s/AKfycbzohv07LL1Bnqv3tnQ5ZDqDesy_2PnPktORD3wn-uF1VEF-Wwf14y2QMo8LS272AU0GuQ/exec"; // Reemplaza con tu URL de implementación
+const urlApp = "https://script.google.com/macros/s/AKfycbzohv07LL1Bnqv3tnQ5ZDqDesy_2PnPktORD3wn-uF1VEF-Wwf14y2QMo8LS272AU0GuQ/exec"; // REEMPLAZA CON TU URL REAL
 
 // 1. CONFIGURACIÓN INICIAL AL CARGAR LA PÁGINA
 window.onload = function() {
@@ -14,7 +14,13 @@ window.onload = function() {
     fechaInput.value = fechaLocal.toISOString().split('T')[0];
     
     // Mostrar fecha en el badge superior (DD/MM/YYYY)
-    fechaDisplay.innerText = hoy.toLocaleDateString('es-PE');
+    if(fechaDisplay) fechaDisplay.innerText = hoy.toLocaleDateString('es-PE');
+
+    // Escuchar cambios en el motivo para ocultar/mostrar tablas en tiempo real
+    const motivoSelect = document.getElementById('motivoReunion');
+    if(motivoSelect) {
+        motivoSelect.addEventListener('change', gestionarVisibilidad);
+    }
 };
 
 // 2. FUNCIÓN PARA BUSCAR POR LÍDER Y VERIFICAR DONES
@@ -28,19 +34,47 @@ async function buscarPorLider() {
     try {
         const resp = await fetch(`${urlApp}?lider=${encodeURIComponent(lider)}`);
         integrantes = await resp.json();
+        
+        // Dibujar los datos en las tablas
         renderizarTablas();
+        
+        // Aplicar el filtro de visibilidad según el motivo seleccionado
+        gestionarVisibilidad();
+        
     } catch (err) {
         console.error("Error al obtener datos:", err);
-        alert("Error al conectar con el servidor. Verifique la URL de la App.");
+        alert("Error al conectar con el servidor.");
     } finally {
         loading.style.display = 'none';
     }
 }
 
-// 3. FUNCIÓN PARA DIBUJAR LAS TABLAS (BAUTIZADOS Y AMIGOS)
+// 3. FUNCIÓN: CONTROL DE VISIBILIDAD DE MÓDULOS (SEGÚN TU REQUERIMIENTO)
+function gestionarVisibilidad() {
+    const motivo = document.getElementById('motivoReunion').value;
+    const secBautizados = document.getElementById('seccionBautizados');
+    const secAmigos = document.getElementById('seccionAmigos');
+
+    // Si no se han cargado integrantes aún, no hacemos nada
+    if (!secBautizados || !secAmigos) return;
+
+    if (motivo === "GP:Estudios biblicos") {
+        // Solo visualiza el modulo "Amigos de esperanza"
+        secBautizados.style.display = 'none';
+        secAmigos.style.display = 'block';
+    } else {
+        // GP:Hogares o GP:Unidades de Acción (Visualiza ambos)
+        secBautizados.style.display = 'block';
+        secAmigos.style.display = 'block';
+    }
+}
+
+// 4. FUNCIÓN PARA DIBUJAR LAS TABLAS
 function renderizarTablas() {
     const tbB = document.querySelector('#tablaBautizados tbody');
     const tbA = document.querySelector('#tablaAmigos tbody');
+    
+    if (!tbB || !tbA) return;
     
     tbB.innerHTML = ''; 
     tbA.innerHTML = '';
@@ -57,7 +91,7 @@ function renderizarTablas() {
             <tr>
                 <td>
                     <div style="font-weight: 600; color: #333;">${nombre}</div>
-                    <small style="color: ${colorDones}; font-weight: 800; font-size: 0.7rem; letter-spacing: 0.5px;">
+                    <small style="color: ${colorDones}; font-weight: 800; font-size: 0.7rem;">
                         ¿REGISTRO DONES?: ${tieneDones}
                     </small>
                 </td>
@@ -80,7 +114,7 @@ function renderizarTablas() {
     });
 }
 
-// 4. FUNCIÓN PARA ENVIAR ASISTENCIA Y REPORTES
+// 5. FUNCIÓN PARA ENVIAR ASISTENCIA
 async function enviarAsistencia() {
     const checks = document.querySelectorAll('.check-asis:checked');
     if (checks.length === 0) return alert("Por favor, seleccione al menos a una persona.");
@@ -88,13 +122,11 @@ async function enviarAsistencia() {
     const btn = document.getElementById('btnEnviar');
     const registrosAmigos = [];
     
-    // Captura de datos de configuración
     const fechaSeleccionada = document.getElementById('fechaManual').value;
     const motivo = document.getElementById('motivoReunion').value;
     const liderSeleccionado = document.getElementById('selectLider').value;
     const nombreGrupo = document.getElementById('nombreGrupo').value;
 
-    // Captura de datos financieros/bautismos
     const totalLes = document.getElementById('totalLes').value || 0;
     const totalOfrendas = document.getElementById('totalOfrendas').value || 0;
     const numBautismo = document.getElementById('numBautismo').value || 0;
@@ -120,11 +152,9 @@ async function enviarAsistencia() {
             fecha: fechaSeleccionada,
             grupo: nombreGrupo,
             motivo: motivo,
-            nombresInasistentes: "", // Opcional: implementar lógica si se requiere
             les: totalLes,
             ofr: totalOfrendas,
             nB: numBautismo
-            // Otros campos se envían vacíos o por defecto según tu estructura en Apps Script
         },
         registrosAmigos: registrosAmigos
     };
@@ -140,12 +170,11 @@ async function enviarAsistencia() {
             body: JSON.stringify(payload)
         });
 
-        // Mostrar Modal de éxito
         document.getElementById('modalResumen').style.display = 'flex';
         
     } catch (err) {
         console.error("Error al enviar:", err);
-        alert("Hubo un error al guardar los datos. Intente nuevamente.");
+        alert("Hubo un error al guardar los datos.");
         btn.disabled = false;
         btn.innerText = "Guardar Reporte General";
     }
