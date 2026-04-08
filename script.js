@@ -1,118 +1,125 @@
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyPxCH-7NEj_o2-pmCEqBoKBW42euhxD6L4vZzMU8OeI5QlWbFZJIEF5go9EOhiDaSZtQ/exec"; 
+// Variables globales
 let integrantes = [];
+const urlApp = "https://script.google.com/macros/s/AKfycbzohv07LL1Bnqv3tnQ5ZDqDesy_2PnPktORD3wn-uF1VEF-Wwf14y2QMo8LS272AU0GuQ/exec"; // Reemplaza con tu URL de implementación
 
-document.getElementById('fechaActual').innerText = new Date().toLocaleDateString();
+// 1. FUNCIÓN PARA BUSCAR POR LÍDER
+async function buscarPorLider() {
+    const lider = document.getElementById('selectLider').value;
+    if (!lider) return alert("Seleccione un líder");
 
-// Carga la lista de personas según el líder seleccionado
-async function cargarLista() {
-    const lider = document.getElementById('liderGp').value;
-    if(!lider) return;
-    
+    // Mostrar indicador de carga si tienes uno
+    document.getElementById('loading').style.display = 'block';
+
     try {
-        const res = await fetch(`${SCRIPT_URL}?lider=${encodeURIComponent(lider)}`);
-        integrantes = await res.json();
+        const resp = await fetch(`${urlApp}?lider=${encodeURIComponent(lider)}`);
+        integrantes = await resp.json();
         renderizarTablas();
-    } catch(e) { alert("Error al cargar la lista del Padrón."); }
+    } catch (err) {
+        console.error("Error al obtener datos:", err);
+        alert("Error al conectar con el servidor");
+    } finally {
+        document.getElementById('loading').style.display = 'none';
+    }
 }
 
+// 2. FUNCIÓN PARA DIBUJAR LAS TABLAS CON VALIDACIÓN DE DONES
 function renderizarTablas() {
     const tbB = document.querySelector('#tablaBautizados tbody');
     const tbA = document.querySelector('#tablaAmigos tbody');
-    tbB.innerHTML = ''; tbA.innerHTML = '';
+    
+    // Limpiar tablas antes de llenar
+    tbB.innerHTML = ''; 
+    tbA.innerHTML = '';
 
     integrantes.forEach((p, i) => {
-        const nombre = p.Nombres || p.NOMBRES;
+        // Normalización de nombres de campos según el JSON del servidor
+        const nombre = p.Nombres || p.NOMBRES || "Sin Nombre";
         const tipo = (p.Tipo || p.TIPO || "").toString().toLowerCase();
-        const esB = tipo.includes("bautizado");
+        const esBautizado = tipo.includes("bautizado");
+        
+        // Lógica de Dones (SI/NO) calculada en el Apps Script
+        const tieneDones = p.TieneDones || "NO";
+        const colorDones = tieneDones === "SI" ? "#1e8e3e" : "#d93025"; // Verde o Rojo
 
         const rowHtml = `
             <tr>
-                <td>${nombre}</td>
-                <td align="right">
-                    <input type="number" id="lec-${i}" class="lec-input" placeholder="N°" min="1" max="20">
-                    <input type="checkbox" class="check-asis" data-idx="${i}">
+                <td>
+                    <div style="font-weight: 500;">${nombre}</div>
+                    <small style="color: ${colorDones}; font-weight: bold; font-size: 0.75rem;">
+                        ¿REGISTRO DONES?: ${tieneDones}
+                    </small>
+                </td>
+                <td align="right" style="vertical-align: middle;">
+                    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
+                        <input type="number" id="lec-${i}" class="lec-input" 
+                               placeholder="N°" min="1" max="20" 
+                               style="width: 45px; padding: 4px; border: 1px solid #ccc; border-radius: 4px;">
+                        <input type="checkbox" class="check-asis" data-idx="${i}" 
+                               style="width: 20px; height: 20px; cursor: pointer;">
+                    </div>
                 </td>
             </tr>`;
         
-        esB ? tbB.innerHTML += rowHtml : tbA.innerHTML += rowHtml;
-    });
-}
-
-function marcarBloque(v) { 
-    document.querySelectorAll('.check-asis').forEach(c => c.checked = v); 
-}
-
-function enviarDatos() {
-    const lider = document.getElementById('liderGp').value;
-    const grupo = document.getElementById('nombreGrupo').value;
-    if(!lider || !grupo) return alert("Complete Líder y Nombre del Grupo");
-
-    const btn = document.getElementById('btnEnviar');
-    btn.disabled = true;
-    btn.innerText = "Enviando...";
-
-    let inasistentes = [];
-    let dAmigos = [];
-    let nA = 0, nI = 0;
-    let sumaLecB = 0, sumaLecA = 0;
-
-    integrantes.forEach((p, i) => {
-        const asis = document.querySelector(`.check-asis[data-idx="${i}"]`).checked;
-        const lec = parseInt(document.getElementById(`lec-${i}`).value) || 0;
-        const tipo = (p.Tipo || p.TIPO || "").toString().toLowerCase();
-        const esB = tipo.includes("bautizado");
-        const nombre = p.Nombres || p.NOMBRES;
-
-        if (asis) {
-            nA++;
-            esB ? sumaLecB += lec : sumaLecA += lec;
+        // Separar en la tabla correspondiente
+        if (esBautizado) {
+            tbB.innerHTML += rowHtml;
         } else {
-            nI++;
-            inasistentes.push(nombre);
-        }
-
-        // Migración a AMIGOS: Solo si NO es bautizado y tiene lección marcada
-        if (!esB && lec > 0) {
-            dAmigos.push({
-                nombre: nombre,
-                leccionNum: lec,
-                fecha: new Date().toLocaleDateString(),
-                lider: lider,
-                grupo: grupo
-            });
+            tbA.innerHTML += rowHtml;
         }
     });
+}
 
-    const reporteAsist = {
-        lider: lider,
-        fecha: new Date().toLocaleDateString(),
-        grupo: grupo,
-        motivo: document.getElementById('motivo').value,
-        nombresInasistentes: inasistentes.join(", "),
-        sexoRelativo: "Mixto",
-        tipoRelativo: "Grupal",
-        porc: ((nA / integrantes.length) * 100).toFixed(0) + "%",
-        les: document.getElementById('totalLes').value,
-        ofr: document.getElementById('totalOfrendas').value,
-        nA: nA, nI: nI,
-        nB: document.getElementById('numBautismo').value,
-        lLES_Total: sumaLecB,
-        lBib_Total: sumaLecA
+// 3. FUNCIÓN PARA ENVIAR ASISTENCIA
+async function enviarAsistencia() {
+    const checks = document.querySelectorAll('.check-asis:checked');
+    if (checks.length === 0) return alert("Marque al menos una asistencia");
+
+    const registrosAmigos = [];
+    const fechaActual = new Date().toLocaleDateString('es-PE');
+    const liderSeleccionado = document.getElementById('selectLider').value;
+    const nombreGrupo = "Vencedores"; // Puedes hacerlo dinámico si gustas
+
+    checks.forEach(check => {
+        const idx = check.getAttribute('data-idx');
+        const persona = integrantes[idx];
+        const numLeccion = document.getElementById(`lec-${idx}`).value || "1";
+
+        registrosAmigos.push({
+            nombre: (persona.Nombres || persona.NOMBRES),
+            leccionNum: numLeccion,
+            fecha: fechaActual,
+            lider: liderSeleccionado,
+            grupo: nombreGrupo
+        });
+    });
+
+    const payload = {
+        destino: "ASISTENCIA",
+        reporteAsist: {
+            lider: liderSeleccionado,
+            fecha: fechaActual,
+            grupo: nombreGrupo,
+            // Aquí puedes agregar los demás campos de tu reporte general si los necesitas
+        },
+        registrosAmigos: registrosAmigos
     };
 
-    fetch(SCRIPT_URL, {
-        method: "POST",
-        mode: "no-cors",
-        body: JSON.stringify({ 
-            destino: "ASISTENCIA", 
-            reporteAsist: reporteAsist, 
-            registrosAmigos: dAmigos 
-        })
-    }).then(() => {
-        document.getElementById('modalResumen').style.display = 'flex';
-    }).catch(() => {
-        alert("Error de conexión");
-        btn.disabled = false;
-        btn.innerText = "Guardar Reporte General";
-    });
+    try {
+        const btn = document.getElementById('btnEnviar');
+        btn.disabled = true;
+        btn.innerText = "Enviando...";
+
+        const response = await fetch(urlApp, {
+            method: 'POST',
+            mode: 'no-cors', // Importante para Google Apps Script
+            cache: 'no-cache',
+            body: JSON.stringify(payload)
+        });
+
+        alert("Asistencia enviada con éxito");
+        location.reload(); // Recargar para limpiar
+    } catch (err) {
+        console.error("Error al enviar:", err);
+        alert("Error al guardar la asistencia");
+    }
 }
