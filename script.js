@@ -18,53 +18,136 @@ function actualizarNombreGrupo() {
 }
 
 async function cargarIntegrantes(lider) {
-    // Simulación de carga (Aquí se conecta al link de Padron)
-    // Se asume que el script de Padron devuelve un JSON con {nombres, apellidos, tipo, dni, sexo, celular}
+    const bContainer = document.getElementById("listaBautizados");
+    const aContainer = document.getElementById("listaAmigos");
+    
+    bContainer.innerHTML = "<div class='p-3 text-center text-muted'>Cargando integrantes...</div>";
+    aContainer.innerHTML = "";
+
     try {
-        const response = await fetch(`${API_PADRON}?lider=${lider}`);
+        const response = await fetch(`${API_PADRON}?lider=${encodeURIComponent(lider)}`);
         const data = await response.json();
         renderizarLista(data);
     } catch (e) {
         console.error("Error cargando integrantes", e);
+        bContainer.innerHTML = "<div class='p-3 text-danger'>Error al conectar con el Padrón</div>";
     }
-}
-
-function toggleInputs() {
-    const motivo = document.getElementById("motivo").value;
-    const inputs = document.querySelectorAll(".input-asistencia");
-    inputs.forEach(input => {
-        if (motivo === "Casas") {
-            input.type = "checkbox";
-            input.className = "form-check-input input-asistencia";
-        } else {
-            input.type = "number";
-            input.placeholder = "1-7";
-            input.min = "1";
-            input.max = "7";
-            input.className = "form-control form-control-sm input-asistencia w-25";
-        }
-    });
 }
 
 function renderizarLista(data) {
     const bContainer = document.getElementById("listaBautizados");
     const aContainer = document.getElementById("listaAmigos");
-    bContainer.innerHTML = ""; aContainer.innerHTML = "";
+    bContainer.innerHTML = ""; 
+    aContainer.innerHTML = "";
 
-    data.forEach((p, index) => {
+    if (!data || data.length === 0) {
+        bContainer.innerHTML = "<div class='p-3 text-muted'>No hay datos para este líder</div>";
+        return;
+    }
+
+    data.forEach((p) => {
+        // CORRECCIÓN: Usamos operadores OR (||) para capturar tanto Mayúsculas como Minúsculas
+        const nombres = p.Nombres || p.nombres || "Sin Nombre";
+        const apellidos = p.Apellidos || p.apellidos || "";
+        const dni = p.DNI || p.dni || "S/D";
+        const tipo = p.Tipo || p.tipo || "Amigo";
+        const sexo = p.Sexo || p.sexo || "-";
+        const celular = p.Celular || p.celular || "-";
+
         const item = document.createElement("div");
-        item.className = "list-group-item d-flex justify-content-between align-items-center p-3";
+        item.className = "list-group-item d-flex justify-content-between align-items-center p-3 border-bottom";
+        
         item.innerHTML = `
             <div>
-                <span class="fw-medium">${p.apellidos}, ${p.nombres}</span>
-                <small class="d-block text-muted">DNI: ${p.dni}</small>
+                <span class="fw-bold d-block text-uppercase" style="font-size: 0.9rem;">${apellidos}, ${nombres}</span>
+                <small class="text-muted text-uppercase">${tipo} | DNI: ${dni}</small>
             </div>
             <div class="control-area">
-                <input data-dni="${p.dni}" data-tipo="${p.tipo}" class="input-asistencia">
+                <input class="input-asistencia shadow-sm" 
+                       data-dni="${dni}" 
+                       data-nombre="${nombres} ${apellidos}" 
+                       data-tipo="${tipo}"
+                       data-sexo="${sexo}"
+                       data-celular="${celular}">
             </div>
         `;
-        if (p.tipo === "Bautizado") bContainer.appendChild(item);
-        else aContainer.appendChild(item);
+
+        // Filtramos por tipo para separar en los dos módulos
+        if (tipo.toLowerCase().includes("bautizado")) {
+            bContainer.appendChild(item);
+        } else {
+            aContainer.appendChild(item);
+        }
     });
+
     toggleInputs();
 }
+
+function toggleInputs() {
+    const motivo = document.getElementById("motivo").value;
+    const inputs = document.querySelectorAll(".input-asistencia");
+    
+    inputs.forEach(input => {
+        if (motivo === "Casas") {
+            input.type = "checkbox";
+            input.className = "form-check-input input-asistencia";
+            input.style.width = "28px";
+            input.style.height = "28px";
+        } else {
+            input.type = "number";
+            input.placeholder = "0";
+            input.min = "1";
+            input.max = "7";
+            input.className = "form-control form-control-sm input-asistencia text-center";
+            input.style.width = "60px";
+        }
+    });
+}
+
+// Función para enviar los datos al segundo Excel
+document.getElementById("asistenciaForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    
+    const lider = document.getElementById("liderGp").value;
+    const nombreGrupo = document.getElementById("nombreGrupo").value;
+    const motivo = document.getElementById("motivo").value;
+    const semana = document.getElementById("semana").value;
+    const inputs = document.querySelectorAll(".input-asistencia");
+    
+    const asistencias = [];
+    
+    inputs.forEach(input => {
+        let valor;
+        if (motivo === "Casas") {
+            valor = input.checked ? "SI" : "NO";
+        } else {
+            valor = input.value || "0";
+        }
+        
+        asistencias.push({
+            liderGp: lider,
+            nombreGrupo: nombreGrupo,
+            dni: input.dataset.dni,
+            nombreCompleto: input.dataset.nombre,
+            sexo: input.dataset.sexo,
+            celular: input.dataset.celular,
+            tipo: input.dataset.tipo,
+            semana: semana,
+            valor: valor,
+            motivo: motivo
+        });
+    });
+
+    // Enviar a Google Apps Script Destino
+    try {
+        const res = await fetch(API_DESTINO, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(asistencias)
+        });
+        alert("¡Asistencia enviada con éxito!");
+    } catch (err) {
+        alert("Error al enviar: " + err);
+    }
+});
