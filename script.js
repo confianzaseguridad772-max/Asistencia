@@ -9,7 +9,8 @@ const gruposMapping = {
 };
 
 const API_PADRON = "https://script.google.com/macros/s/AKfycbxsb8k8QKyWVsWOHn7dnH3dSDGRn3-mG7Kuk7SNAsdtyAwpInrBeIKjG8QBi42-tesioA/exec";
-const API_DESTINO = "https://script.google.com/macros/s/AKfycbxKepoHm7LFSG1cOmtngN5qB9y25yW6v21lTzCcT7esXyKpGCeR76HXuAkzcUxnU2d2/exec";
+// REEMPLAZA ESTA URL con el link de "Implementación" de tu Excel de Destino
+const API_DESTINO = "https://script.google.com/macros/s/AKfycbxtyKC0jnGTZd-kS0uQiM7Aqw3bmoYDposuQgp2g_jlTox7aCGIE-RbDQVT0PvbINb2/exec";
 
 function actualizarNombreGrupo() {
     const lider = document.getElementById("liderGp").value;
@@ -20,8 +21,7 @@ function actualizarNombreGrupo() {
 async function cargarIntegrantes(lider) {
     const bContainer = document.getElementById("listaBautizados");
     const aContainer = document.getElementById("listaAmigos");
-    
-    bContainer.innerHTML = "<div class='p-3 text-center text-muted'>Cargando integrantes...</div>";
+    bContainer.innerHTML = "<p class='p-3 text-center'>Buscando en Padrón...</p>";
     aContainer.innerHTML = "";
 
     try {
@@ -29,64 +29,49 @@ async function cargarIntegrantes(lider) {
         const data = await response.json();
         renderizarLista(data);
     } catch (e) {
-        console.error("Error cargando integrantes", e);
-        bContainer.innerHTML = "<div class='p-3 text-danger'>Error al conectar con el Padrón</div>";
+        console.error("Error:", e);
+        bContainer.innerHTML = "<p class='p-3 text-danger'>Error al cargar integrantes.</p>";
     }
 }
 
 function renderizarLista(data) {
     const bContainer = document.getElementById("listaBautizados");
     const aContainer = document.getElementById("listaAmigos");
-    bContainer.innerHTML = ""; 
-    aContainer.innerHTML = "";
-
-    if (!data || data.length === 0) {
-        bContainer.innerHTML = "<div class='p-3 text-muted'>No hay datos para este líder</div>";
-        return;
-    }
+    bContainer.innerHTML = ""; aContainer.innerHTML = "";
 
     data.forEach((p) => {
-        // CORRECCIÓN: Usamos operadores OR (||) para capturar tanto Mayúsculas como Minúsculas
-        const nombres = p.Nombres || p.nombres || "Sin Nombre";
+        // Normalización de nombres de campos (Mayúsculas/Minúsculas)
+        const nombres = p.Nombres || p.nombres || "";
         const apellidos = p.Apellidos || p.apellidos || "";
-        const dni = p.DNI || p.dni || "S/D";
+        const dni = p.DNI || p.dni || "";
         const tipo = p.Tipo || p.tipo || "Amigo";
-        const sexo = p.Sexo || p.sexo || "-";
-        const celular = p.Celular || p.celular || "-";
+        const sexo = p.Sexo || p.sexo || "M";
 
         const item = document.createElement("div");
         item.className = "list-group-item d-flex justify-content-between align-items-center p-3 border-bottom";
-        
         item.innerHTML = `
             <div>
-                <span class="fw-bold d-block text-uppercase" style="font-size: 0.9rem;">${apellidos}, ${nombres}</span>
-                <small class="text-muted text-uppercase">${tipo} | DNI: ${dni}</small>
+                <span class="fw-bold d-block text-uppercase">${apellidos}, ${nombres}</span>
+                <small class="text-muted">DNI: ${dni}</small>
             </div>
             <div class="control-area">
-                <input class="input-asistencia shadow-sm" 
+                <input class="input-asistencia" 
                        data-dni="${dni}" 
-                       data-nombre="${nombres} ${apellidos}" 
-                       data-tipo="${tipo}"
-                       data-sexo="${sexo}"
-                       data-celular="${celular}">
+                       data-nombre="${apellidos}, ${nombres}" 
+                       data-sexo="${sexo}" 
+                       data-tipo="${tipo}">
             </div>
         `;
 
-        // Filtramos por tipo para separar en los dos módulos
-        if (tipo.toLowerCase().includes("bautizado")) {
-            bContainer.appendChild(item);
-        } else {
-            aContainer.appendChild(item);
-        }
+        if (tipo.toLowerCase().includes("bautizado")) bContainer.appendChild(item);
+        else aContainer.appendChild(item);
     });
-
     toggleInputs();
 }
 
 function toggleInputs() {
     const motivo = document.getElementById("motivo").value;
     const inputs = document.querySelectorAll(".input-asistencia");
-    
     inputs.forEach(input => {
         if (motivo === "Casas") {
             input.type = "checkbox";
@@ -95,59 +80,65 @@ function toggleInputs() {
             input.style.height = "28px";
         } else {
             input.type = "number";
-            input.placeholder = "0";
-            input.min = "1";
-            input.max = "7";
             input.className = "form-control form-control-sm input-asistencia text-center";
-            input.style.width = "60px";
+            input.style.width = "65px";
+            input.placeholder = "0";
         }
     });
 }
 
-// Función para enviar los datos al segundo Excel
+// LÓGICA DE ENVÍO AL EXCEL (Sincronizado con tu función doPost)
 document.getElementById("asistenciaForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     
-    const lider = document.getElementById("liderGp").value;
+    const btn = e.target.querySelector("button[type='submit']");
+    btn.disabled = true;
+    btn.innerHTML = "Enviando...";
+
+    const liderGp = document.getElementById("liderGp").value;
     const nombreGrupo = document.getElementById("nombreGrupo").value;
-    const motivo = document.getElementById("motivo").value;
     const semana = document.getElementById("semana").value;
+    const motivo = document.getElementById("motivo").value;
     const inputs = document.querySelectorAll(".input-asistencia");
-    
-    const asistencias = [];
-    
+
+    const datosAsistencia = [];
+
     inputs.forEach(input => {
-        let valor;
+        let valorFinal;
         if (motivo === "Casas") {
-            valor = input.checked ? "SI" : "NO";
+            valorFinal = input.checked ? "SI" : "NO";
         } else {
-            valor = input.value || "0";
+            valorFinal = input.value || "0"; // Envía el número de Unidad
         }
-        
-        asistencias.push({
-            liderGp: lider,
-            nombreGrupo: nombreGrupo,
+
+        datosAsistencia.push({
             dni: input.dataset.dni,
+            semana: semana, // Debe ser "Abril-1", etc.
+            valor: valorFinal,
+            liderGp: liderGp,
+            nombreGrupo: nombreGrupo,
             nombreCompleto: input.dataset.nombre,
             sexo: input.dataset.sexo,
-            celular: input.dataset.celular,
-            tipo: input.dataset.tipo,
-            semana: semana,
-            valor: valor,
-            motivo: motivo
+            tipo: input.dataset.tipo
         });
     });
 
-    // Enviar a Google Apps Script Destino
     try {
-        const res = await fetch(API_DESTINO, {
+        // Enviamos el JSON al Apps Script del Excel de Destino
+        await fetch(API_DESTINO, {
             method: "POST",
-            mode: "no-cors",
+            mode: "no-cors", // IMPORTANTE para evitar errores de CORS con Google Scripts
+            cache: "no-cache",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(asistencias)
+            body: JSON.stringify(datosAsistencia)
         });
-        alert("¡Asistencia enviada con éxito!");
-    } catch (err) {
-        alert("Error al enviar: " + err);
+
+        alert("¡Registro enviado correctamente!");
+    } catch (error) {
+        console.error("Error al enviar:", error);
+        alert("Error al enviar los datos.");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = "Enviar Asistencia <i class='fas fa-paper-plane ms-2'></i>";
     }
 });
