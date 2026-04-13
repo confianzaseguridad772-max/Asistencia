@@ -1,103 +1,70 @@
-// --- CONFIGURACIÓN ---
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwaOlN1Alza9Ka5_e7S1Hq2itAXFEnR3aui5p33x7wxv30Gl-s7aQFEltm1dm0VbFURXA/exec"; // Asegúrate de poner tu URL aquí
+const gruposMapping = {
+    "1-Cherry": "Angles",
+    "2-Tito": "Amistades",
+    "3-Ricardo": "Orquideas",
+    "4-Pedro": "Candados",
+    "5-Erika": "Adolescentes",
+    "6-Jafet": "Ven",
+    "7-Gustabo": "Poloto"
+};
 
-// --- FUNCIÓN PARA ENVIAR ASISTENCIA (Módulo Amigos, Unidad, Hogares) ---
-async function enviarAsistencia() {
-    const btn = document.getElementById("btnEnviarAsist");
-    btn.disabled = true;
-    btn.innerText = "Enviando...";
+const API_PADRON = "https://script.google.com/macros/s/AKfycbxsb8k8QKyWVsWOHn7dnH3dSDGRn3-mG7Kuk7SNAsdtyAwpInrBeIKjG8QBi42-tesioA/exec";
+const API_DESTINO = "https://script.google.com/macros/s/AKfycbxKepoHm7LFSG1cOmtngN5qB9y25yW6v21lTzCcT7esXyKpGCeR76HXuAkzcUxnU2d2/exec";
 
-    // Captura de datos básicos del reporte
+function actualizarNombreGrupo() {
     const lider = document.getElementById("liderGp").value;
-    const fecha = document.getElementById("fechaAsist").value; // Formato YYYY-MM-DD
-    const grupo = document.getElementById("nombreGrupo").value;
-    const motivo = document.getElementById("motivoAsist").value;
-    
-    // Captura de datos específicos de Amigos de Esperanza (N° 1 al 20)
-    const numeroAmigo = document.getElementById("numAmigo") ? document.getElementById("numAmigo").value : "";
+    document.getElementById("nombreGrupo").value = gruposMapping[lider] || "";
+    if (lider) cargarIntegrantes(lider);
+}
 
-    // Captura de los registros de personas marcadas en el formulario
-    const filas = document.querySelectorAll(".fila-asistencia");
-    let registros = [];
-
-    filas.forEach(fila => {
-        const checkbox = fila.querySelector(".check-asist");
-        if (checkbox && checkbox.checked) {
-            registros.push({
-                dni: fila.dataset.dni,
-                nombre: fila.dataset.nombre,
-                tipo: fila.dataset.tipo,
-                sexo: fila.dataset.sexo,
-                leccionNum: fila.querySelector(".select-leccion") ? fila.querySelector(".select-leccion").value : "",
-                nB: numeroAmigo // Este es el dato clave que pides para las columnas N°1, N°2...
-            });
-        }
-    });
-
-    const payload = {
-        destino: "ASISTENCIA",
-        reporteAsist: {
-            lider: lider,
-            fecha: fecha,
-            grupo: grupo,
-            motivo: motivo,
-            nB: numeroAmigo, // Se envía también en el encabezado del reporte
-            les: document.getElementById("lesAsist") ? document.getElementById("lesAsist").value : "",
-            ofr: document.getElementById("ofrAsist") ? document.getElementById("ofrAsist").value : ""
-        },
-        registros: registros
-    };
-
+async function cargarIntegrantes(lider) {
+    // Simulación de carga (Aquí se conecta al link de Padron)
+    // Se asume que el script de Padron devuelve un JSON con {nombres, apellidos, tipo, dni, sexo, celular}
     try {
-        const response = await fetch(SCRIPT_URL, {
-            method: "POST",
-            mode: "no-cors", // Importante para evitar bloqueos de CORS con Google Scripts
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
-
-        alert("Asistencia enviada con éxito a la hoja " + motivo);
-        location.reload(); 
-    } catch (error) {
-        console.error("Error:", error);
-        alert("Error al enviar: " + error.message);
-    } finally {
-        btn.disabled = false;
-        btn.innerText = "Enviar Asistencia";
+        const response = await fetch(`${API_PADRON}?lider=${lider}`);
+        const data = await response.json();
+        renderizarLista(data);
+    } catch (e) {
+        console.error("Error cargando integrantes", e);
     }
 }
 
-// --- FUNCIÓN PARA REGISTRO EN PADRÓN (Nuevo Integrante) ---
-async function registrarPadron(event) {
-    event.preventDefault();
-    const btn = document.getElementById("btnRegistrar");
-    btn.disabled = true;
+function toggleInputs() {
+    const motivo = document.getElementById("motivo").value;
+    const inputs = document.querySelectorAll(".input-asistencia");
+    inputs.forEach(input => {
+        if (motivo === "Casas") {
+            input.type = "checkbox";
+            input.className = "form-check-input input-asistencia";
+        } else {
+            input.type = "number";
+            input.placeholder = "1-7";
+            input.min = "1";
+            input.max = "7";
+            input.className = "form-control form-control-sm input-asistencia w-25";
+        }
+    });
+}
 
-    const data = {
-        destino: "PADRON",
-        DNI: document.getElementById("dni").value,
-        Nombres: document.getElementById("nombres").value,
-        ApPaterno: document.getElementById("apPaterno").value,
-        ApMaterno: document.getElementById("apMaterno").value,
-        fechaNac: document.getElementById("fechaNac").value,
-        Sexo: document.getElementById("sexo").value,
-        Celular: document.getElementById("celular").value,
-        Direccion: document.getElementById("direccion").value,
-        Tipo: document.getElementById("tipoPersona").value,
-        LiderGp: document.getElementById("liderResponsable").value
-    };
+function renderizarLista(data) {
+    const bContainer = document.getElementById("listaBautizados");
+    const aContainer = document.getElementById("listaAmigos");
+    bContainer.innerHTML = ""; aContainer.innerHTML = "";
 
-    try {
-        await fetch(SCRIPT_URL, {
-            method: "POST",
-            mode: "no-cors",
-            body: JSON.stringify(data)
-        });
-        alert("Registrado correctamente en el Padrón");
-        document.getElementById("formPadron").reset();
-    } catch (error) {
-        alert("Error en el registro");
-    } finally {
-        btn.disabled = false;
-    }
+    data.forEach((p, index) => {
+        const item = document.createElement("div");
+        item.className = "list-group-item d-flex justify-content-between align-items-center p-3";
+        item.innerHTML = `
+            <div>
+                <span class="fw-medium">${p.apellidos}, ${p.nombres}</span>
+                <small class="d-block text-muted">DNI: ${p.dni}</small>
+            </div>
+            <div class="control-area">
+                <input data-dni="${p.dni}" data-tipo="${p.tipo}" class="input-asistencia">
+            </div>
+        `;
+        if (p.tipo === "Bautizado") bContainer.appendChild(item);
+        else aContainer.appendChild(item);
+    });
+    toggleInputs();
 }
