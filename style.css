@@ -22,23 +22,24 @@ body {
     padding: 12px;
 }
 
-.input-asistencia[type="checkbox"] {
-    width: 25px;
-    height: 25px;
-    cursor: pointer;
-}
-
 .section-container {
     background: white;
     padding: 15px;
     border-radius: 15px;
 }
 
-/* Spinner animado para el botón */
 .fa-spin {
     animation: fa-spin 1s infinite linear;
 }
+
 @keyframes fa-spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+/* Ajuste para móviles */
+@media (max-width: 576px) {
+    .input-asistencia {
+        width: 50px !important;
+    }
 }
