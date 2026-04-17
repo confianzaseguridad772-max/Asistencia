@@ -14,7 +14,12 @@ const API_DESTINO = "https://script.google.com/macros/s/AKfycbzY8dOhCLVf3Ar4pU4e
 function actualizarNombreGrupo() {
     const lider = document.getElementById("liderGp").value;
     document.getElementById("nombreGrupo").value = gruposMapping[lider] || "";
-    if (lider) cargarIntegrantes(lider);
+    if (lider) {
+        cargarIntegrantes(lider);
+    } else {
+        document.getElementById("listaBautizados").innerHTML = "";
+        document.getElementById("listaAmigos").innerHTML = "";
+    }
 }
 
 async function cargarIntegrantes(liderSeleccionado) {
@@ -39,7 +44,6 @@ function renderizarLista(data, liderSeleccionado) {
     bContainer.innerHTML = ""; 
     aContainer.innerHTML = "";
 
-    // Filtrado por la columna "LíderGp" (manejando posibles variaciones de nombre)
     const filtrados = data.filter(p => {
         const valorLider = p.LíderGp || p.liderGp || p["Líder Gp"] || "";
         return valorLider.toString().trim() === liderSeleccionado.trim();
@@ -92,6 +96,7 @@ function toggleInputs() {
             input.type = "number";
             input.className = "form-control form-control-sm input-asistencia text-center";
             input.style.width = "65px";
+            input.style.height = "auto";
             input.placeholder = "0";
         }
     });
@@ -100,6 +105,8 @@ function toggleInputs() {
 document.getElementById("asistenciaForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const btn = e.target.querySelector("button[type='submit']");
+    const form = e.target;
+    
     btn.disabled = true;
     btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Enviando...";
 
@@ -113,7 +120,6 @@ document.getElementById("asistenciaForm").addEventListener("submit", async (e) =
 
     inputs.forEach(input => {
         let valorFinal = (motivo === "Casas") ? (input.checked ? "SI" : "NO") : (input.value || "0");
-
         datosAsistencia.push({
             dni: input.dataset.dni,
             semana: semana,
@@ -134,9 +140,24 @@ document.getElementById("asistenciaForm").addEventListener("submit", async (e) =
             cache: "no-cache",
             body: JSON.stringify(datosAsistencia)
         });
-        alert("¡Registro enviado con éxito a la hoja " + motivo + "!");
+
+        // Mensaje estético sin nombre de dominio
+        Swal.fire({
+            title: '¡Registrado!',
+            text: `La asistencia se envió con éxito a la hoja ${motivo}`,
+            icon: 'success',
+            confirmButtonColor: '#0d6efd',
+            timer: 3000
+        });
+
+        // LIMPIEZA DEL FORMULARIO
+        form.reset();
+        document.getElementById("listaBautizados").innerHTML = "";
+        document.getElementById("listaAmigos").innerHTML = "";
+        document.getElementById("nombreGrupo").value = "";
+
     } catch (error) {
-        alert("Error de conexión al enviar.");
+        Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
     } finally {
         btn.disabled = false;
         btn.innerHTML = "Enviar Asistencia <i class='fas fa-paper-plane ms-2'></i>";
