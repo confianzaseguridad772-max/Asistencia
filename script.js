@@ -9,7 +9,7 @@ const gruposMapping = {
 };
 
 const API_PADRON = "https://script.google.com/macros/s/AKfycbxsb8k8QKyWVsWOHn7dnH3dSDGRn3-mG7Kuk7SNAsdtyAwpInrBeIKjG8QBi42-tesioA/exec";
-const API_DESTINO = "https://script.google.com/macros/s/AKfycbxtyKC0jnGTZd-kS0uQiM7Aqw3bmoYDposuQgp2g_jlTox7aCGIE-RbDQVT0PvbINb2/exec";
+const API_DESTINO = "https://script.google.com/macros/s/AKfycbzY8dOhCLVf3Ar4pU4e9zcEQcKg0OIuwoljlT4OMVYvlXFe-U77kE991lOgPAw4guC3/exec";
 
 function actualizarNombreGrupo() {
     const lider = document.getElementById("liderGp").value;
@@ -20,17 +20,16 @@ function actualizarNombreGrupo() {
 async function cargarIntegrantes(liderSeleccionado) {
     const bContainer = document.getElementById("listaBautizados");
     const aContainer = document.getElementById("listaAmigos");
-    bContainer.innerHTML = "<p class='p-3 text-center'>Buscando en Padrón...</p>";
+    bContainer.innerHTML = "<p class='p-3 text-center'><i class='fas fa-spinner fa-spin'></i> Cargando lista de integrantes...</p>";
     aContainer.innerHTML = "";
 
     try {
         const response = await fetch(API_PADRON);
         const data = await response.json();
-        // Pasamos el líder seleccionado para filtrar en el cliente
         renderizarLista(data, liderSeleccionado);
     } catch (e) {
         console.error("Error:", e);
-        bContainer.innerHTML = "<p class='p-3 text-danger'>Error al cargar integrantes.</p>";
+        bContainer.innerHTML = "<p class='p-3 text-danger text-center'>Error al obtener datos del Padrón.</p>";
     }
 }
 
@@ -40,18 +39,18 @@ function renderizarLista(data, liderSeleccionado) {
     bContainer.innerHTML = ""; 
     aContainer.innerHTML = "";
 
-    // FILTRADO: Solo personas que pertenecen al líder seleccionado
-    const integrantesFiltrados = data.filter(p => {
-        const liderEnFila = p.LíderGp || p.liderGp || p.LIDERGP || "";
-        return liderEnFila.toString().trim() === liderSeleccionado.trim();
+    // Filtrado por la columna "LíderGp" (manejando posibles variaciones de nombre)
+    const filtrados = data.filter(p => {
+        const valorLider = p.LíderGp || p.liderGp || p["Líder Gp"] || "";
+        return valorLider.toString().trim() === liderSeleccionado.trim();
     });
 
-    if (integrantesFiltrados.length === 0) {
-        bContainer.innerHTML = "<p class='p-3 text-muted text-center'>No hay integrantes asignados a este líder.</p>";
+    if (filtrados.length === 0) {
+        bContainer.innerHTML = "<p class='p-3 text-muted text-center'>No hay personas registradas para este líder.</p>";
         return;
     }
 
-    integrantesFiltrados.forEach((p) => {
+    filtrados.forEach((p) => {
         const nombres = p.Nombres || p.nombres || "";
         const apellidos = p.Apellidos || p.apellidos || "";
         const dni = p.DNI || p.dni || "";
@@ -102,7 +101,7 @@ document.getElementById("asistenciaForm").addEventListener("submit", async (e) =
     e.preventDefault();
     const btn = e.target.querySelector("button[type='submit']");
     btn.disabled = true;
-    btn.innerHTML = "Enviando...";
+    btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Enviando...";
 
     const liderGp = document.getElementById("liderGp").value;
     const nombreGrupo = document.getElementById("nombreGrupo").value;
@@ -113,12 +112,7 @@ document.getElementById("asistenciaForm").addEventListener("submit", async (e) =
     const datosAsistencia = [];
 
     inputs.forEach(input => {
-        let valorFinal;
-        if (motivo === "Casas") {
-            valorFinal = input.checked ? "SI" : "NO";
-        } else {
-            valorFinal = input.value || "0";
-        }
+        let valorFinal = (motivo === "Casas") ? (input.checked ? "SI" : "NO") : (input.value || "0");
 
         datosAsistencia.push({
             dni: input.dataset.dni,
@@ -128,7 +122,8 @@ document.getElementById("asistenciaForm").addEventListener("submit", async (e) =
             nombreGrupo: nombreGrupo,
             nombreCompleto: input.dataset.nombre,
             sexo: input.dataset.sexo,
-            tipo: input.dataset.tipo
+            tipo: input.dataset.tipo,
+            motivo: motivo
         });
     });
 
@@ -137,13 +132,11 @@ document.getElementById("asistenciaForm").addEventListener("submit", async (e) =
             method: "POST",
             mode: "no-cors",
             cache: "no-cache",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(datosAsistencia)
         });
-        alert("¡Registro enviado correctamente!");
+        alert("¡Registro enviado con éxito a la hoja " + motivo + "!");
     } catch (error) {
-        console.error("Error al enviar:", error);
-        alert("Error al enviar los datos.");
+        alert("Error de conexión al enviar.");
     } finally {
         btn.disabled = false;
         btn.innerHTML = "Enviar Asistencia <i class='fas fa-paper-plane ms-2'></i>";
