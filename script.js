@@ -144,7 +144,7 @@ document.getElementById("asistenciaForm").addEventListener("submit", async (e) =
         // Mensaje estético sin nombre de dominio
         Swal.fire({
             title: '¡Registrado!',
-            text: `La asistencia se envió con éxito a la hoja ${motivo}`,
+            text: `la asistencia ${motivo}`,
             icon: 'success',
             confirmButtonColor: '#0d6efd',
             timer: 3000
