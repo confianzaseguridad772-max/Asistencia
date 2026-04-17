@@ -9,7 +9,6 @@ const gruposMapping = {
 };
 
 const API_PADRON = "https://script.google.com/macros/s/AKfycbxsb8k8QKyWVsWOHn7dnH3dSDGRn3-mG7Kuk7SNAsdtyAwpInrBeIKjG8QBi42-tesioA/exec";
-// REEMPLAZA ESTA URL con el link de "Implementación" de tu Excel de Destino
 const API_DESTINO = "https://script.google.com/macros/s/AKfycbxtyKC0jnGTZd-kS0uQiM7Aqw3bmoYDposuQgp2g_jlTox7aCGIE-RbDQVT0PvbINb2/exec";
 
 function actualizarNombreGrupo() {
@@ -18,29 +17,41 @@ function actualizarNombreGrupo() {
     if (lider) cargarIntegrantes(lider);
 }
 
-async function cargarIntegrantes(lider) {
+async function cargarIntegrantes(liderSeleccionado) {
     const bContainer = document.getElementById("listaBautizados");
     const aContainer = document.getElementById("listaAmigos");
     bContainer.innerHTML = "<p class='p-3 text-center'>Buscando en Padrón...</p>";
     aContainer.innerHTML = "";
 
     try {
-        const response = await fetch(`${API_PADRON}?lider=${encodeURIComponent(lider)}`);
+        const response = await fetch(API_PADRON);
         const data = await response.json();
-        renderizarLista(data);
+        // Pasamos el líder seleccionado para filtrar en el cliente
+        renderizarLista(data, liderSeleccionado);
     } catch (e) {
         console.error("Error:", e);
         bContainer.innerHTML = "<p class='p-3 text-danger'>Error al cargar integrantes.</p>";
     }
 }
 
-function renderizarLista(data) {
+function renderizarLista(data, liderSeleccionado) {
     const bContainer = document.getElementById("listaBautizados");
     const aContainer = document.getElementById("listaAmigos");
-    bContainer.innerHTML = ""; aContainer.innerHTML = "";
+    bContainer.innerHTML = ""; 
+    aContainer.innerHTML = "";
 
-    data.forEach((p) => {
-        // Normalización de nombres de campos (Mayúsculas/Minúsculas)
+    // FILTRADO: Solo personas que pertenecen al líder seleccionado
+    const integrantesFiltrados = data.filter(p => {
+        const liderEnFila = p.LíderGp || p.liderGp || p.LIDERGP || "";
+        return liderEnFila.toString().trim() === liderSeleccionado.trim();
+    });
+
+    if (integrantesFiltrados.length === 0) {
+        bContainer.innerHTML = "<p class='p-3 text-muted text-center'>No hay integrantes asignados a este líder.</p>";
+        return;
+    }
+
+    integrantesFiltrados.forEach((p) => {
         const nombres = p.Nombres || p.nombres || "";
         const apellidos = p.Apellidos || p.apellidos || "";
         const dni = p.DNI || p.dni || "";
@@ -87,10 +98,8 @@ function toggleInputs() {
     });
 }
 
-// LÓGICA DE ENVÍO AL EXCEL (Sincronizado con tu función doPost)
 document.getElementById("asistenciaForm").addEventListener("submit", async (e) => {
     e.preventDefault();
-    
     const btn = e.target.querySelector("button[type='submit']");
     btn.disabled = true;
     btn.innerHTML = "Enviando...";
@@ -108,12 +117,12 @@ document.getElementById("asistenciaForm").addEventListener("submit", async (e) =
         if (motivo === "Casas") {
             valorFinal = input.checked ? "SI" : "NO";
         } else {
-            valorFinal = input.value || "0"; // Envía el número de Unidad
+            valorFinal = input.value || "0";
         }
 
         datosAsistencia.push({
             dni: input.dataset.dni,
-            semana: semana, // Debe ser "Abril-1", etc.
+            semana: semana,
             valor: valorFinal,
             liderGp: liderGp,
             nombreGrupo: nombreGrupo,
@@ -124,15 +133,13 @@ document.getElementById("asistenciaForm").addEventListener("submit", async (e) =
     });
 
     try {
-        // Enviamos el JSON al Apps Script del Excel de Destino
         await fetch(API_DESTINO, {
             method: "POST",
-            mode: "no-cors", // IMPORTANTE para evitar errores de CORS con Google Scripts
+            mode: "no-cors",
             cache: "no-cache",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(datosAsistencia)
         });
-
         alert("¡Registro enviado correctamente!");
     } catch (error) {
         console.error("Error al enviar:", error);
