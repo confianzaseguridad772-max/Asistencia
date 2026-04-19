@@ -2,7 +2,7 @@ const gruposMapping = {
     "1-Cherry": "Amisadai",
     "2-Tito": "Amigos de sábado",
     "3-Ricardo": "Lirios del Valle 3.0",
-    "4-Pedro": "Iktus ",
+    "4-Pedro": "Iktus",
     "5-Erika": "Embajadores de Cristo",
     "6-Jafet": "sn",
     "7-Gustabo": "Nueva Esperanza"
