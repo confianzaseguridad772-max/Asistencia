@@ -1,11 +1,11 @@
 const gruposMapping = {
     "1-Cherry": "Amisadai",
     "2-Tito": "Amigos de sábado",
-    "3-Ricardo": "Lirios del Valle",
-    "4-Pedro": "sn",
+    "3-Ricardo": "Lirios del Valle 3.0",
+    "4-Pedro": "Iktus ",
     "5-Erika": "Embajadores de Cristo",
     "6-Jafet": "sn",
-    "7-Gustabo": "sn"
+    "7-Gustabo": "Nueva Esperanza"
 };
 
 const API_PADRON = "https://script.google.com/macros/s/AKfycbxsb8k8QKyWVsWOHn7dnH3dSDGRn3-mG7Kuk7SNAsdtyAwpInrBeIKjG8QBi42-tesioA/exec";
