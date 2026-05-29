@@ -9,7 +9,7 @@ const gruposMapping = {
 };
 
 const API_PADRON = "https://script.google.com/macros/s/AKfycbyETSYLwNLa0up7iz4J3gNdoGp_s097q1HeDEAtLtAc5OPTjjCyM0fZILl9cGNP_ww/exec";
-const API_DESTINO = "https://script.google.com/macros/s/AKfycbytEYgGRugIClUqJogRkyjqz2K1wAfB7ZQoRpehr_cdmQHlOpD5NjjHKSR-_OeQ4a52/exec";
+const API_DESTINO = "https://script.google.com/macros/s/AKfycbwk5ve3CfUc5WyXrmb5NVqKGmlJIL2fkHJqIyyWRrnyTHd1Oe4xeesrdabs4yZAtRZf/exec";
 
 function actualizarNombreGrupo() {
     const lider = document.getElementById("liderGp").value;
