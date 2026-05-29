@@ -8,7 +8,7 @@ const gruposMapping = {
     "7-Gustabo": "Nueva Esperanza"
 };
 
-const API_PADRON = "https://script.google.com/macros/s/AKfycbxsb8k8QKyWVsWOHn7dnH3dSDGRn3-mG7Kuk7SNAsdtyAwpInrBeIKjG8QBi42-tesioA/exec";
+const API_PADRON = "https://script.google.com/macros/s/AKfycbyETSYLwNLa0up7iz4J3gNdoGp_s097q1HeDEAtLtAc5OPTjjCyM0fZILl9cGNP_ww/exec";
 const API_DESTINO = "https://script.google.com/macros/s/AKfycbytEYgGRugIClUqJogRkyjqz2K1wAfB7ZQoRpehr_cdmQHlOpD5NjjHKSR-_OeQ4a52/exec";
 
 function actualizarNombreGrupo() {
