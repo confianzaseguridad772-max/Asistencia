@@ -1,11 +1,11 @@
 const gruposMapping = {
-    "1-Cherry": "Amisadai",
+    "1-Rusvel": "Amisadai",
     "2-Tito": "Amigos de sábado",
     "3-Ricardo": "Lirios del Valle 3.0",
     "4-Pedro": "Iktus",
     "5-Erika": "Embajadores de Cristo",
-    "6-Jafet": "sn",
-    "7-Gustabo": "Nueva Esperanza"
+    "6-Jafet": "Amigos de Esperanza",
+    "7-Gustabo": "Yehoshúa"
 };
 
 const API_PADRON = "https://script.google.com/macros/s/AKfycbyETSYLwNLa0up7iz4J3gNdoGp_s097q1HeDEAtLtAc5OPTjjCyM0fZILl9cGNP_ww/exec";
